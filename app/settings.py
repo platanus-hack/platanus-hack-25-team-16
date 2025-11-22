@@ -19,18 +19,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
+# TODO: Eliminar estos secretos de acá, sería un blooper tenerlos en las presentación
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-insecure-&mz0+o+go+766)gk36#vc21k6ll7-rwg@8z0%z1y&@z5ok9#%h"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG: bool = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS: list[str] = []
 
 
 # Application definition
 
-INSTALLED_APPS = [
+INSTALLED_APPS: list[str] = [
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -38,21 +39,32 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    # Third-party security apps
+    "axes",  # Brute force protection
+    "django_otp",  # OTP framework
+    "django_otp.plugins.otp_totp",  # TOTP (Google Authenticator, etc.)
+    "django_otp.plugins.otp_static",  # Backup codes
+    # TODO: Algo pro sería añadirle OTP de whatsapp a la librería
+    # Our custom security features
+    "auth_security",
 ]
 
-MIDDLEWARE = [
+MIDDLEWARE: list[str] = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "axes.middleware.AxesMiddleware",
+    "auth_security.middleware.SessionSecurityMiddleware",
+    "django_otp.middleware.OTPMiddleware",  # django-otp MFA support
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
 ROOT_URLCONF = "app.urls"
 
-TEMPLATES = [
+TEMPLATES: list[dict[str, object]] = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [],
@@ -73,7 +85,7 @@ WSGI_APPLICATION = "app.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
+DATABASES: dict[str, dict[str, object]] = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
@@ -84,18 +96,39 @@ DATABASES = {
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
-AUTH_PASSWORD_VALIDATORS = [
+AUTH_PASSWORD_VALIDATORS: list[dict[str, object]] = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "NAME": "auth_security.authentication.password_validators.MinimumLengthValidator",
+        "OPTIONS": {"min_length": 12},
+    },
+    {
+        "NAME": "auth_security.authentication.password_validators.ComplexityValidator",
+        "OPTIONS": {
+            "min_uppercase": 1,
+            "min_lowercase": 1,
+            "min_digits": 1,
+            "min_special": 1,
+        },
     },
     {
         "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+        "NAME": "auth_security.authentication.password_validators.BreachedPasswordValidator",
+    },
+    {
+        "NAME": "auth_security.authentication.password_validators.PasswordReuseValidator",
+    },
+    {
+        "NAME": "auth_security.authentication.password_validators.ForbiddenSubstringValidator",
+        "OPTIONS": {
+            "forbidden_list": ["company", "name", "xpendit"],  # Add your own forbidden words
+            "similarity_threshold": 0.8,  # 80% similarity threshold
+            "case_sensitive": False,
+        },
     },
 ]
 
@@ -121,3 +154,92 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# =============================================================================
+# SECURITY CONFIGURATION
+# =============================================================================
+
+# Session Security
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_AGE = 3600  # 1 hour
+
+# CSRF Protection
+CSRF_COOKIE_SECURE = False  # Set to True in production with HTTPS
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = 'Strict'
+
+# Auth Security Configuration
+DJANGO_SEC: dict[str, dict[str, object]] = {
+    # Authentication Protection
+    'AUTH_PROTECTION': {
+        'MAX_LOGIN_ATTEMPTS': 5,
+        'LOCKOUT_DURATION': 900,  # 15 minutes in seconds
+        'LOCKOUT_STRATEGY': 'exponential',  # fixed, exponential
+        'DELAY_STRATEGY': 'exponential',  # none, fixed, exponential
+        'BASE_DELAY_SECONDS': 1,
+        'NOTIFICATION': {
+            'EMAIL_ON_LOCKOUT': True,
+            'EMAIL_ON_SUSPICIOUS_LOGIN': True,
+            'WEBHOOK_URL': None,
+        }
+    },
+
+    # Session Security
+    'SESSION_SECURITY': {
+        'ABSOLUTE_TIMEOUT': 28800,  # 8 hours max session
+        'INACTIVITY_TIMEOUT': 3600,  # 1 hour inactivity timeout
+        'ROTATE_ON_LOGIN': True,  # Prevent session fixation
+        'BIND_TO_IP': True,  # Validate IP doesn't change
+        'BIND_TO_USER_AGENT': False,  # Can cause issues with browser updates
+    },
+
+    # Password Validation
+    'PASSWORD_VALIDATORS': {
+        'MIN_LENGTH': 12,
+        'COMPLEXITY': {
+            'min_uppercase': 1,
+            'min_lowercase': 1,
+            'min_digits': 1,
+            'min_special': 1,
+        },
+        'CHECK_BREACHED': True,
+        'PREVENT_REUSE': 5,
+        'FORBIDDEN_SUBSTRINGS': [
+            'company',
+            'name',
+            'xpendit',
+        ],
+    },
+}
+
+# Caching (required for rate limiting and lockout tracking)
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+    }
+}
+
+# =============================================================================
+# DJANGO-AXES CONFIGURATION (Brute Force Protection)
+# =============================================================================
+
+# Authentication backend for axes
+AUTHENTICATION_BACKENDS = [
+    # AxesStandaloneBackend should be the first backend
+    'axes.backends.AxesStandaloneBackend',
+    # Django ModelBackend is the default authentication backend
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+# Axes Configuration
+AXES_FAILURE_LIMIT = 5  # Lock after 5 failed attempts
+AXES_COOLOFF_TIME = 1  # Cooloff period in hours (can also use timedelta)
+AXES_RESET_ON_SUCCESS = True  # Reset failures on successful login
+AXES_LOCKOUT_TEMPLATE = None  # Use default lockout response
+AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]  # Lock by username and IP
+AXES_IPWARE_PROXY_COUNT = 1  # Number of proxies (adjust for your setup)
+AXES_VERBOSE = True  # Enable verbose logging
+AXES_ENABLE_ADMIN = True  # Enable axes admin interface
