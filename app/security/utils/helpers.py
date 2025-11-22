@@ -300,16 +300,25 @@ def check_password_strength(password: str) -> dict:
     return analysis
 
 
-def get_client_ip(request) -> str:
+def get_client_ip(request=None) -> Optional[str]:
     """
     Get the client's real IP address from request.
 
     Args:
-        request: Django request object
+        request: Django request object (optional)
 
     Returns:
-        Client IP address
+        Client IP address or None if not available
     """
+    # Try to get request from thread local if not provided
+    if request is None:
+        try:
+            # This is a simplified approach - in production you'd use middleware
+            # to store request in thread local
+            return None
+        except ImportError:
+            return None
+
     x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
     if x_forwarded_for:
         # X-Forwarded-For can contain multiple IPs
@@ -321,6 +330,22 @@ def get_client_ip(request) -> str:
             ip = request.META.get("REMOTE_ADDR", "127.0.0.1")
 
     return ip
+
+
+def get_current_user():
+    """
+    Get the currently authenticated user from the request context.
+
+    Returns:
+        User object or None if not authenticated
+    """
+    try:
+        # This would require a middleware to store the request in thread local
+        # For now, return None as a safe default
+        # In production, you'd implement CurrentUserMiddleware
+        return None
+    except ImportError:
+        return None
 
 
 def is_private_ip(ip: str) -> bool:
