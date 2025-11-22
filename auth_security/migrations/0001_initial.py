@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
@@ -15,42 +14,174 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='PasswordHistory',
+            name="PasswordHistory",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('password_hash', models.CharField(help_text='Hashed password (same format as User.password)', max_length=255)),
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True, help_text='When this password was set')),
-                ('user', models.ForeignKey(help_text='User whose password this was', on_delete=django.db.models.deletion.CASCADE, related_name='password_history', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "password_hash",
+                    models.CharField(
+                        help_text="Hashed password (same format as User.password)",
+                        max_length=255,
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True,
+                        db_index=True,
+                        help_text="When this password was set",
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        help_text="User whose password this was",
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="password_history",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Password History',
-                'verbose_name_plural': 'Password Histories',
-                'ordering': ['-created_at'],
-                'indexes': [models.Index(fields=['user', '-created_at'], name='auth_securi_user_id_e08010_idx')],
+                "verbose_name": "Password History",
+                "verbose_name_plural": "Password Histories",
+                "ordering": ["-created_at"],
+                "indexes": [
+                    models.Index(
+                        fields=["user", "-created_at"],
+                        name="auth_securi_user_id_e08010_idx",
+                    )
+                ],
             },
         ),
         migrations.CreateModel(
-            name='SuspiciousLogin',
+            name="SuspiciousLogin",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('axes_attempt_id', models.IntegerField(blank=True, help_text='Related axes AccessAttempt ID', null=True)),
-                ('ip_address', models.GenericIPAddressField(default='0.0.0.0', help_text='IP address of suspicious login')),
-                ('user_agent', models.TextField(blank=True, help_text='User agent string')),
-                ('timestamp', models.DateTimeField(auto_now_add=True, db_index=True, help_text='When suspicious login occurred')),
-                ('reason', models.CharField(choices=[('new_ip', 'New IP Address'), ('new_geo', 'New Geographic Location'), ('unusual_agent', 'Unusual User Agent'), ('impossible_travel', 'Impossible Travel'), ('velocity', 'High Velocity Logins'), ('other', 'Other')], help_text='Why this login was flagged as suspicious', max_length=20)),
-                ('details', models.JSONField(blank=True, help_text='Additional details about why this was suspicious', null=True)),
-                ('notified', models.BooleanField(default=False, help_text='Whether user was notified about this login')),
-                ('notified_at', models.DateTimeField(blank=True, help_text='When user was notified', null=True)),
-                ('reviewed', models.BooleanField(default=False, help_text='Whether this has been reviewed by security team')),
-                ('reviewed_at', models.DateTimeField(blank=True, help_text='When this was reviewed', null=True)),
-                ('reviewed_by', models.ForeignKey(blank=True, help_text='Who reviewed this login', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='reviewed_suspicious_logins', to=settings.AUTH_USER_MODEL)),
-                ('user', models.ForeignKey(help_text='User who logged in', on_delete=django.db.models.deletion.CASCADE, related_name='suspicious_logins', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "axes_attempt_id",
+                    models.IntegerField(
+                        blank=True, help_text="Related axes AccessAttempt ID", null=True
+                    ),
+                ),
+                (
+                    "ip_address",
+                    models.GenericIPAddressField(
+                        default="0.0.0.0", help_text="IP address of suspicious login"
+                    ),
+                ),
+                (
+                    "user_agent",
+                    models.TextField(blank=True, help_text="User agent string"),
+                ),
+                (
+                    "timestamp",
+                    models.DateTimeField(
+                        auto_now_add=True,
+                        db_index=True,
+                        help_text="When suspicious login occurred",
+                    ),
+                ),
+                (
+                    "reason",
+                    models.CharField(
+                        choices=[
+                            ("new_ip", "New IP Address"),
+                            ("new_geo", "New Geographic Location"),
+                            ("unusual_agent", "Unusual User Agent"),
+                            ("impossible_travel", "Impossible Travel"),
+                            ("velocity", "High Velocity Logins"),
+                            ("other", "Other"),
+                        ],
+                        help_text="Why this login was flagged as suspicious",
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "details",
+                    models.JSONField(
+                        blank=True,
+                        help_text="Additional details about why this was suspicious",
+                        null=True,
+                    ),
+                ),
+                (
+                    "notified",
+                    models.BooleanField(
+                        default=False,
+                        help_text="Whether user was notified about this login",
+                    ),
+                ),
+                (
+                    "notified_at",
+                    models.DateTimeField(
+                        blank=True, help_text="When user was notified", null=True
+                    ),
+                ),
+                (
+                    "reviewed",
+                    models.BooleanField(
+                        default=False,
+                        help_text="Whether this has been reviewed by security team",
+                    ),
+                ),
+                (
+                    "reviewed_at",
+                    models.DateTimeField(
+                        blank=True, help_text="When this was reviewed", null=True
+                    ),
+                ),
+                (
+                    "reviewed_by",
+                    models.ForeignKey(
+                        blank=True,
+                        help_text="Who reviewed this login",
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="reviewed_suspicious_logins",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        help_text="User who logged in",
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="suspicious_logins",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Suspicious Login',
-                'verbose_name_plural': 'Suspicious Logins',
-                'ordering': ['-timestamp'],
-                'indexes': [models.Index(fields=['-timestamp', 'user'], name='auth_securi_timesta_0367e2_idx'), models.Index(fields=['reviewed', '-timestamp'], name='auth_securi_reviewe_f66a18_idx')],
+                "verbose_name": "Suspicious Login",
+                "verbose_name_plural": "Suspicious Logins",
+                "ordering": ["-timestamp"],
+                "indexes": [
+                    models.Index(
+                        fields=["-timestamp", "user"],
+                        name="auth_securi_timesta_0367e2_idx",
+                    ),
+                    models.Index(
+                        fields=["reviewed", "-timestamp"],
+                        name="auth_securi_reviewe_f66a18_idx",
+                    ),
+                ],
             },
         ),
     ]

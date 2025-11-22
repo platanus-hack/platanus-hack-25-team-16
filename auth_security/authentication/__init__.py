@@ -9,9 +9,9 @@ from .password_validators import (
 )
 
 __all__ = [
-    'ComplexityValidator',
-    'MinimumLengthValidator',
-    'BreachedPasswordValidator',
-    'PasswordReuseValidator',
-    'ForbiddenSubstringValidator',
+    "ComplexityValidator",
+    "MinimumLengthValidator",
+    "BreachedPasswordValidator",
+    "PasswordReuseValidator",
+    "ForbiddenSubstringValidator",
 ]

@@ -19,25 +19,22 @@ class PasswordHistory(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='password_history',
-        help_text=_("User whose password this was")
+        related_name="password_history",
+        help_text=_("User whose password this was"),
     )
     password_hash = models.CharField(
-        max_length=255,
-        help_text=_("Hashed password (same format as User.password)")
+        max_length=255, help_text=_("Hashed password (same format as User.password)")
     )
     created_at = models.DateTimeField(
-        auto_now_add=True,
-        db_index=True,
-        help_text=_("When this password was set")
+        auto_now_add=True, db_index=True, help_text=_("When this password was set")
     )
 
     class Meta:
         verbose_name = _("Password History")
         verbose_name_plural = _("Password Histories")
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=["user", "-created_at"]),
         ]
 
     def __str__(self):

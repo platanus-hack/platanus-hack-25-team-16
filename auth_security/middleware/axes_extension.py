@@ -4,6 +4,7 @@ Extension to django-axes for additional security features.
 Adds suspicious login detection, notifications, and custom behaviors
 on top of django-axes base functionality.
 """
+
 from datetime import timedelta
 from typing import Any
 
@@ -27,28 +28,28 @@ def check_suspicious_login(sender, request, user, **kwargs):
     This is triggered after successful login (axes has already done brute force check).
     We add additional checks for suspicious patterns.
     """
-    auth_config = get_setting('AUTH_PROTECTION', {})
-    notification_config = auth_config.get('NOTIFICATION', {})
+    auth_config = get_setting("AUTH_PROTECTION", {})
+    notification_config = auth_config.get("NOTIFICATION", {})
 
-    if not notification_config.get('EMAIL_ON_SUSPICIOUS_LOGIN', True):
+    if not notification_config.get("EMAIL_ON_SUSPICIOUS_LOGIN", True):
         return
 
     ip_address = get_client_ip(request)
-    user_agent = request.META.get('HTTP_USER_AGENT', '')
+    user_agent = request.META.get("HTTP_USER_AGENT", "")
 
     suspicious_reasons: list[tuple[str, dict[str, Any]]] = []
 
     # Check for new IP address
     if _is_new_ip(user, ip_address):
-        suspicious_reasons.append(('new_ip', {'ip': ip_address}))
+        suspicious_reasons.append(("new_ip", {"ip": ip_address}))
 
     # Check for unusual user agent
     if _is_unusual_user_agent(user, user_agent):
-        suspicious_reasons.append(('unusual_agent', {'user_agent': user_agent[:200]}))
+        suspicious_reasons.append(("unusual_agent", {"user_agent": user_agent[:200]}))
 
     # Check for velocity (multiple logins in short time)
     if _check_velocity(user):
-        suspicious_reasons.append(('velocity', {}))
+        suspicious_reasons.append(("velocity", {}))
 
     # If suspicious, create records and notify
     for reason, details in suspicious_reasons:
@@ -103,17 +104,16 @@ def _is_unusual_user_agent(user, user_agent: str) -> bool:
     if not user_agent:
         return True
 
-    # Check if we've seen this UA before for this user
-    previous = SuspiciousLogin.objects.filter(
-        user=user,
-        user_agent=user_agent,
-    ).exists()
-
     # If we haven't seen it before, it might be suspicious
     # But we'll be lenient here - only flag truly unusual patterns
     suspicious_patterns = [
-        'curl', 'wget', 'python-requests', 'scrapy',
-        'bot', 'crawler', 'spider',
+        "curl",
+        "wget",
+        "python-requests",
+        "scrapy",
+        "bot",
+        "crawler",
+        "spider",
     ]
 
     ua_lower = user_agent.lower()

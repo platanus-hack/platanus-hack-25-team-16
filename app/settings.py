@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from decouple import config, Csv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,12 +22,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # TODO: Eliminar estos secretos de acá, sería un blooper tenerlos en las presentación
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-&mz0+o+go+766)gk36#vc21k6ll7-rwg@8z0%z1y&@z5ok9#%h"
+SECRET_KEY = config("SECRET_KEY")
+DEBUG = config("DEBUG", default=False, cast=bool)
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG: bool = True
+ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1", cast=Csv())
 
-ALLOWED_HOSTS: list[str] = []
+# CSRF Trusted Origins
+CSRF_TRUSTED_ORIGINS = config("CSRF_TRUSTED_ORIGINS", default="", cast=Csv())
 
 
 # Application definition
@@ -125,7 +127,11 @@ AUTH_PASSWORD_VALIDATORS: list[dict[str, object]] = [
     {
         "NAME": "auth_security.authentication.password_validators.ForbiddenSubstringValidator",
         "OPTIONS": {
-            "forbidden_list": ["company", "name", "xpendit"],  # Add your own forbidden words
+            "forbidden_list": [
+                "company",
+                "name",
+                "xpendit",
+            ],  # Add your own forbidden words
             "similarity_threshold": 0.8,  # 80% similarity threshold
             "case_sensitive": False,
         },
@@ -162,63 +168,20 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Session Security
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
-SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_AGE = 3600  # 1 hour
 
 # CSRF Protection
 CSRF_COOKIE_SECURE = False  # Set to True in production with HTTPS
 CSRF_COOKIE_HTTPONLY = True
-CSRF_COOKIE_SAMESITE = 'Strict'
+CSRF_COOKIE_SAMESITE = "Strict"
 
-# Auth Security Configuration
-DJANGO_SEC: dict[str, dict[str, object]] = {
-    # Authentication Protection
-    'AUTH_PROTECTION': {
-        'MAX_LOGIN_ATTEMPTS': 5,
-        'LOCKOUT_DURATION': 900,  # 15 minutes in seconds
-        'LOCKOUT_STRATEGY': 'exponential',  # fixed, exponential
-        'DELAY_STRATEGY': 'exponential',  # none, fixed, exponential
-        'BASE_DELAY_SECONDS': 1,
-        'NOTIFICATION': {
-            'EMAIL_ON_LOCKOUT': True,
-            'EMAIL_ON_SUSPICIOUS_LOGIN': True,
-            'WEBHOOK_URL': None,
-        }
-    },
-
-    # Session Security
-    'SESSION_SECURITY': {
-        'ABSOLUTE_TIMEOUT': 28800,  # 8 hours max session
-        'INACTIVITY_TIMEOUT': 3600,  # 1 hour inactivity timeout
-        'ROTATE_ON_LOGIN': True,  # Prevent session fixation
-        'BIND_TO_IP': True,  # Validate IP doesn't change
-        'BIND_TO_USER_AGENT': False,  # Can cause issues with browser updates
-    },
-
-    # Password Validation
-    'PASSWORD_VALIDATORS': {
-        'MIN_LENGTH': 12,
-        'COMPLEXITY': {
-            'min_uppercase': 1,
-            'min_lowercase': 1,
-            'min_digits': 1,
-            'min_special': 1,
-        },
-        'CHECK_BREACHED': True,
-        'PREVENT_REUSE': 5,
-        'FORBIDDEN_SUBSTRINGS': [
-            'company',
-            'name',
-            'xpendit',
-        ],
-    },
-}
 
 # Caching (required for rate limiting and lockout tracking)
 CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-snowflake",
     }
 }
 
@@ -229,9 +192,9 @@ CACHES = {
 # Authentication backend for axes
 AUTHENTICATION_BACKENDS = [
     # AxesStandaloneBackend should be the first backend
-    'axes.backends.AxesStandaloneBackend',
+    "axes.backends.AxesStandaloneBackend",
     # Django ModelBackend is the default authentication backend
-    'django.contrib.auth.backends.ModelBackend',
+    "django.contrib.auth.backends.ModelBackend",
 ]
 
 # Axes Configuration
@@ -243,3 +206,102 @@ AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]  # Lock by username and I
 AXES_IPWARE_PROXY_COUNT = 1  # Number of proxies (adjust for your setup)
 AXES_VERBOSE = True  # Enable verbose logging
 AXES_ENABLE_ADMIN = True  # Enable axes admin interface
+# ============================================================================
+# SECURITY CONFIGURATION
+# ============================================================================
+
+# Redis Configuration (optional, for rate limiting)
+REDIS_URL = config("REDIS_URL", default="redis://localhost:6379/0")
+
+# Django Security Configuration
+DJANGO_SEC = {
+    # Risk profile: 'strict', 'moderate', 'relaxed'
+    "RISK_PROFILE": config("SECURITY_RISK_PROFILE", default="moderate"),
+    # Enable/disable security features
+    "ENABLE_SECURITY_HEADERS": config(
+        "ENABLE_SECURITY_HEADERS", default=True, cast=bool
+    ),
+    "ENABLE_RATE_LIMITING": config("ENABLE_RATE_LIMITING", default=True, cast=bool),
+    "ENABLE_REQUEST_SIZE_LIMIT": config(
+        "ENABLE_REQUEST_SIZE_LIMIT", default=True, cast=bool
+    ),
+    "ENABLE_SUSPICIOUS_PATTERNS": config(
+        "ENABLE_SUSPICIOUS_PATTERNS", default=True, cast=bool
+    ),
+    # CSP Policy configuration
+    "CSP_POLICY": "moderate",  # 'strict', 'moderate', 'relaxed', 'custom'
+    "CSP_REPORT_ONLY": DEBUG,  # Report-only mode in development
+    # Rate limiting configuration
+    "RATE_LIMITING": {
+        "BACKEND": "cache",  # 'redis', 'cache', 'memory'
+        "DEFAULT_LIMITS": {
+            "anonymous": "100/h",
+            "authenticated": "1000/h",
+        },
+        "ENDPOINT_LIMITS": {
+            "/api/login/": "5/m",
+            "/api/register/": "10/h",
+            "/api/password-reset/": "3/h",
+        },
+    },
+    # Request size limits
+    "REQUEST_SIZE_LIMIT": 10 * 1024 * 1024,  # 10 MB default
+    "REQUEST_SIZE_LIMITS": {
+        "/api/upload/": 100 * 1024 * 1024,  # 100 MB for uploads
+    },
+    # Suspicious patterns action: 'log', 'block', 'degrade'
+    # Set to 'block' to test security features even in development
+    "SUSPICIOUS_ACTION": config("SUSPICIOUS_ACTION", default="block"),
+    "SUSPICIOUS_THRESHOLD": 5,  # Auto-block after N violations
+    "BLOCK_DURATION": 3600,  # 1 hour,
+    # Authentication Protection
+    "AUTH_PROTECTION": {
+        "MAX_LOGIN_ATTEMPTS": 5,
+        "LOCKOUT_DURATION": 900,  # 15 minutes in seconds
+        "LOCKOUT_STRATEGY": "exponential",  # fixed, exponential
+        "DELAY_STRATEGY": "exponential",  # none, fixed, exponential
+        "BASE_DELAY_SECONDS": 1,
+        "NOTIFICATION": {
+            "EMAIL_ON_LOCKOUT": True,
+            "EMAIL_ON_SUSPICIOUS_LOGIN": True,
+            "WEBHOOK_URL": None,
+        },
+    },
+    # Session Security
+    "SESSION_SECURITY": {
+        "ABSOLUTE_TIMEOUT": 28800,  # 8 hours max session
+        "INACTIVITY_TIMEOUT": 3600,  # 1 hour inactivity timeout
+        "ROTATE_ON_LOGIN": True,  # Prevent session fixation
+        "BIND_TO_IP": True,  # Validate IP doesn't change
+        "BIND_TO_USER_AGENT": False,  # Can cause issues with browser updates
+    },
+    # Password Validation
+    "PASSWORD_VALIDATORS": {
+        "MIN_LENGTH": 12,
+        "COMPLEXITY": {
+            "min_uppercase": 1,
+            "min_lowercase": 1,
+            "min_digits": 1,
+            "min_special": 1,
+        },
+        "CHECK_BREACHED": True,
+        "PREVENT_REUSE": 5,
+        "FORBIDDEN_SUBSTRINGS": [
+            "company",
+            "name",
+            "xpendit",
+        ],
+    },
+}
+
+# Apply secure defaults based on environment
+from app.security.conf import apply_secure_defaults  # noqa: E402
+
+# Use relaxed preset for development, moderate for production
+if DEBUG:
+    apply_secure_defaults(globals(), preset="relaxed")
+else:
+    apply_secure_defaults(globals(), preset=DJANGO_SEC["RISK_PROFILE"])
+
+# The apply_secure_defaults function will automatically add our security middleware
+# to the MIDDLEWARE list, so no manual modification needed there

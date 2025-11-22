@@ -4,6 +4,6 @@ from .password import PasswordHistory
 from .suspicious import SuspiciousLogin
 
 __all__ = [
-    'PasswordHistory',
-    'SuspiciousLogin',
+    "PasswordHistory",
+    "SuspiciousLogin",
 ]

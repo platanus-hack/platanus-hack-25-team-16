@@ -13,8 +13,7 @@ from django.contrib.auth import user_logged_in, user_login_failed
 from django.contrib.auth.signals import user_logged_out
 from django.core.cache import cache
 from django.core.mail import send_mail
-from django.dispatch import receiver
-from django.http import HttpRequest, JsonResponse
+from django.http import HttpRequest
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
@@ -44,17 +43,19 @@ class LoginProtectionMiddleware:
         self.get_response = get_response
 
         # Load configuration
-        auth_config = get_setting('AUTH_PROTECTION', {})
-        self.max_attempts = auth_config.get('MAX_LOGIN_ATTEMPTS', 5)
-        self.lockout_duration = auth_config.get('LOCKOUT_DURATION', 900)
-        self.lockout_strategy = auth_config.get('LOCKOUT_STRATEGY', 'exponential')
-        self.delay_strategy = auth_config.get('DELAY_STRATEGY', 'exponential')
-        self.base_delay = auth_config.get('BASE_DELAY_SECONDS', 1)
+        auth_config = get_setting("AUTH_PROTECTION", {})
+        self.max_attempts = auth_config.get("MAX_LOGIN_ATTEMPTS", 5)
+        self.lockout_duration = auth_config.get("LOCKOUT_DURATION", 900)
+        self.lockout_strategy = auth_config.get("LOCKOUT_STRATEGY", "exponential")
+        self.delay_strategy = auth_config.get("DELAY_STRATEGY", "exponential")
+        self.base_delay = auth_config.get("BASE_DELAY_SECONDS", 1)
 
-        notification_config = auth_config.get('NOTIFICATION', {})
-        self.email_on_lockout = notification_config.get('EMAIL_ON_LOCKOUT', True)
-        self.email_on_suspicious = notification_config.get('EMAIL_ON_SUSPICIOUS_LOGIN', True)
-        self.webhook_url = notification_config.get('WEBHOOK_URL')
+        notification_config = auth_config.get("NOTIFICATION", {})
+        self.email_on_lockout = notification_config.get("EMAIL_ON_LOCKOUT", True)
+        self.email_on_suspicious = notification_config.get(
+            "EMAIL_ON_SUSPICIOUS_LOGIN", True
+        )
+        self.webhook_url = notification_config.get("WEBHOOK_URL")
 
         # Register signal handlers
         self._register_signals()
@@ -67,14 +68,18 @@ class LoginProtectionMiddleware:
     def _register_signals(self):
         """Register Django auth signals for tracking."""
         # Note: These are registered per instance, but Django signals handle duplicates
-        user_logged_in.connect(self._handle_successful_login, dispatch_uid='security_login_success')
-        user_login_failed.connect(self._handle_failed_login, dispatch_uid='security_login_failed')
-        user_logged_out.connect(self._handle_logout, dispatch_uid='security_logout')
+        user_logged_in.connect(
+            self._handle_successful_login, dispatch_uid="security_login_success"
+        )
+        user_login_failed.connect(
+            self._handle_failed_login, dispatch_uid="security_login_failed"
+        )
+        user_logged_out.connect(self._handle_logout, dispatch_uid="security_logout")
 
     def _handle_successful_login(self, sender, request, user, **kwargs):
         """Handle successful login."""
         ip_address = get_client_ip(request)
-        user_agent = request.META.get('HTTP_USER_AGENT', '')
+        user_agent = request.META.get("HTTP_USER_AGENT", "")
 
         # Record login attempt
         attempt = LoginAttempt.objects.create(
@@ -100,12 +105,13 @@ class LoginProtectionMiddleware:
 
     def _handle_failed_login(self, sender, credentials, request, **kwargs):
         """Handle failed login attempt."""
-        username = credentials.get('username', '')
+        username = credentials.get("username", "")
         ip_address = get_client_ip(request)
-        user_agent = request.META.get('HTTP_USER_AGENT', '')
+        user_agent = request.META.get("HTTP_USER_AGENT", "")
 
         # Try to get user
         from django.contrib.auth import get_user_model
+
         User = get_user_model()
         user = None
         try:
@@ -115,9 +121,9 @@ class LoginProtectionMiddleware:
 
         # Check if account is locked
         if user and self._is_account_locked(user):
-            failure_reason = 'account_locked'
+            failure_reason = "account_locked"
         else:
-            failure_reason = 'invalid_credentials'
+            failure_reason = "invalid_credentials"
 
         # Record failed attempt
         attempt = LoginAttempt.objects.create(
@@ -153,9 +159,7 @@ class LoginProtectionMiddleware:
     def _is_account_locked(self, user) -> bool:
         """Check if user account is currently locked."""
         active_lockouts = AccountLockout.objects.filter(
-            user=user,
-            is_active=True,
-            locked_until__gt=timezone.now()
+            user=user, is_active=True, locked_until__gt=timezone.now()
         )
 
         return active_lockouts.exists()
@@ -163,10 +167,10 @@ class LoginProtectionMiddleware:
     def _lock_account(self, user, ip_address: str, failed_count: int):
         """Lock user account after too many failed attempts."""
         # Calculate lockout duration based on strategy
-        if self.lockout_strategy == 'exponential':
+        if self.lockout_strategy == "exponential":
             # Exponential backoff: 15 min, 30 min, 1 hour, 2 hours, etc.
             lockout_attempts = AccountLockout.objects.filter(user=user).count()
-            duration = self.lockout_duration * (2 ** lockout_attempts)
+            duration = self.lockout_duration * (2**lockout_attempts)
         else:
             duration = self.lockout_duration
 
@@ -195,7 +199,7 @@ class LoginProtectionMiddleware:
     def _increment_failed_attempts(self, username: str, ip_address: str) -> int:
         """Increment and return failed login attempts counter."""
         # Use both username and IP for the key
-        cache_key = f'login_attempts:{username}:{ip_address}'
+        cache_key = f"login_attempts:{username}:{ip_address}"
         failed_count = cache.get(cache_key, 0) + 1
 
         # Store for lockout duration
@@ -205,16 +209,16 @@ class LoginProtectionMiddleware:
 
     def _clear_failed_attempts_cache(self, username: str, ip_address: str):
         """Clear failed attempts cache after successful login."""
-        cache_key = f'login_attempts:{username}:{ip_address}'
+        cache_key = f"login_attempts:{username}:{ip_address}"
         cache.delete(cache_key)
 
     def _apply_login_delay(self, failed_count: int):
         """Apply delay to slow down brute force attempts."""
-        if self.delay_strategy == 'exponential':
+        if self.delay_strategy == "exponential":
             # Exponential delay: 1s, 2s, 4s, 8s, 16s
             delay = self.base_delay * (2 ** (failed_count - 1))
             delay = min(delay, 30)  # Cap at 30 seconds
-        elif self.delay_strategy == 'fixed':
+        elif self.delay_strategy == "fixed":
             delay = self.base_delay
         else:
             return  # No delay
@@ -228,18 +232,18 @@ class LoginProtectionMiddleware:
 
         # Check for new IP address
         if self._is_new_ip(user, attempt.ip_address):
-            suspicious_reasons.append(('new_ip', {'ip': attempt.ip_address}))
+            suspicious_reasons.append(("new_ip", {"ip": attempt.ip_address}))
 
         # Check for login after multiple failures
         recent_failures = LoginAttempt.objects.filter(
             user=user,
             success=False,
-            timestamp__gte=timezone.now() - timedelta(minutes=30)
+            timestamp__gte=timezone.now() - timedelta(minutes=30),
         ).count()
 
         if recent_failures >= 3:
             suspicious_reasons.append(
-                ('after_failures', {'failure_count': recent_failures})
+                ("after_failures", {"failure_count": recent_failures})
             )
 
         # If suspicious, create records and notify
@@ -343,7 +347,5 @@ def check_account_locked(user) -> Optional[AccountLockout]:
         Active AccountLockout instance if locked, None otherwise
     """
     return AccountLockout.objects.filter(
-        user=user,
-        is_active=True,
-        locked_until__gt=timezone.now()
+        user=user, is_active=True, locked_until__gt=timezone.now()
     ).first()
