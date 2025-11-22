@@ -28,13 +28,14 @@ def sensitive_operation(audit: bool = True, require_recent_auth: bool = False):
         def delete_account(request):
             pass
     """
+
     def decorator(view_func: Callable) -> Callable:
         @wraps(view_func)
         @login_required
         def _wrapped_view(request: HttpRequest, *args, **kwargs) -> HttpResponse:
             # Check for recent authentication if required
             if require_recent_auth:
-                last_login = request.session.get('_security_last_login_timestamp')
+                last_login = request.session.get("_security_last_login_timestamp")
                 if last_login:
                     from django.utils import timezone
                     from datetime import timedelta
@@ -45,10 +46,14 @@ def sensitive_operation(audit: bool = True, require_recent_auth: bool = False):
                     # Require authentication within last 15 minutes
                     if age > timedelta(minutes=15):
                         # Store the operation they were trying to do
-                        request.session['_security_operation_pending'] = request.get_full_path()
+                        request.session["_security_operation_pending"] = (
+                            request.get_full_path()
+                        )
 
                         # Redirect to re-authentication
-                        return redirect(reverse('login') + '?next=' + request.get_full_path())
+                        return redirect(
+                            reverse("login") + "?next=" + request.get_full_path()
+                        )
 
             # Mark this request as sensitive (can be used by audit logging)
             request._security_sensitive_operation = True
@@ -65,6 +70,7 @@ def sensitive_operation(audit: bool = True, require_recent_auth: bool = False):
             return response
 
         return _wrapped_view
+
     return decorator
 
 
@@ -80,6 +86,7 @@ def ip_whitelist(allowed_ips: list[str]):
         def admin_endpoint(request):
             pass
     """
+
     def decorator(view_func: Callable) -> Callable:
         @wraps(view_func)
         def _wrapped_view(request: HttpRequest, *args, **kwargs) -> HttpResponse:
@@ -109,6 +116,7 @@ def ip_whitelist(allowed_ips: list[str]):
             return view_func(request, *args, **kwargs)
 
         return _wrapped_view
+
     return decorator
 
 

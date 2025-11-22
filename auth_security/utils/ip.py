@@ -17,13 +17,13 @@ def get_client_ip(request: HttpRequest) -> str:
     Returns:
         Client IP address as a string
     """
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
 
     if x_forwarded_for:
         # X-Forwarded-For can contain multiple IPs, take the first one
-        ip = x_forwarded_for.split(',')[0].strip()
+        ip = x_forwarded_for.split(",")[0].strip()
     else:
-        ip = request.META.get('REMOTE_ADDR', '0.0.0.0')
+        ip = request.META.get("REMOTE_ADDR", "0.0.0.0")
 
     return ip
 
@@ -44,7 +44,11 @@ def get_geo_location(ip_address: str) -> Optional[Dict[str, str]]:
         Expected keys: city, region, country, country_code, latitude, longitude
     """
     # Skip for local IPs
-    if ip_address.startswith('127.') or ip_address.startswith('192.168.') or ip_address == '0.0.0.0':
+    if (
+        ip_address.startswith("127.")
+        or ip_address.startswith("192.168.")
+        or ip_address == "0.0.0.0"
+    ):
         return None
 
     # TODO: Implement actual geolocation lookup

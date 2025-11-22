@@ -14,4 +14,4 @@ This app provides:
 __version__ = "0.1.0"
 __author__ = "Django Security Team"
 
-default_app_config = 'auth_security.apps.AuthSecurityConfig'
+default_app_config = "auth_security.apps.AuthSecurityConfig"
