@@ -155,8 +155,8 @@ class APIRequestLoggingMiddleware(MiddlewareMixin):
         username = None
 
         if user and hasattr(user, 'is_authenticated') and user.is_authenticated:
-            user_id = user.id
-            username = getattr(user, 'username', str(user))
+            user_id = getattr(user, 'id', None)
+            username = getattr(user, 'username', None) or str(user) if user else None
 
         # Determine authentication method
         auth_method = self._get_auth_method(request)
@@ -165,10 +165,22 @@ class APIRequestLoggingMiddleware(MiddlewareMixin):
         api_version = self._extract_api_version(request.path)
         resource_type, resource_id = self._extract_resource_info(request.path)
 
+        # Get IP address - try context first, then request directly
+        ip_address = context.get('ip_address')
+        if not ip_address:
+            # Fallback: try to get IP from request directly
+            xff = request.META.get("HTTP_X_FORWARDED_FOR")
+            if xff:
+                parts = [ip.strip() for ip in xff.split(",") if ip.strip()]
+                if parts:
+                    ip_address = parts[0]
+            if not ip_address:
+                ip_address = request.META.get("REMOTE_ADDR")
+
         return {
             # Context from AuditContextMiddleware
             'correlation_id': context.get('correlation_id', ''),
-            'ip_address': context.get('ip_address', ''),
+            'ip_address': ip_address,
             'user_agent': context.get('user_agent', ''),
 
             # User information

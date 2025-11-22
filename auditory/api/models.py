@@ -84,8 +84,8 @@ class APIRequestLog(models.Model):
     user_id = models.IntegerField(null=True, blank=True, db_index=True)
     username = models.CharField(max_length=150, null=True, blank=True)
     session_id = models.CharField(max_length=64, null=True, blank=True)
-    ip_address = models.GenericIPAddressField()
-    user_agent = models.TextField()
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(null=True, blank=True)
 
     # === Security Metrics ===
     auth_method = models.CharField(
