@@ -144,7 +144,7 @@ class AuditLogEntryAdmin(admin.ModelAdmin):
     def model_info(self, obj):
         """Display app_label.model in a readable format"""
         return format_html(
-            '<strong>{}</strong>.<code>{}</code>',
+            "<strong>{}</strong>.<code>{}</code>",
             obj.app_label,
             obj.model,
         )
@@ -155,7 +155,7 @@ class AuditLogEntryAdmin(admin.ModelAdmin):
         """Display actor information"""
         if obj.actor:
             return format_html(
-                '<strong>{}</strong><br><small>{}</small>',
+                "<strong>{}</strong><br><small>{}</small>",
                 obj.actor_label or obj.actor,
                 obj.actor,
             )
@@ -169,7 +169,9 @@ class AuditLogEntryAdmin(admin.ModelAdmin):
             return format_html(
                 '<code title="{}">{}</code>',
                 obj.correlation_id,
-                obj.correlation_id[:8] + "..." if len(obj.correlation_id) > 8 else obj.correlation_id,
+                obj.correlation_id[:8] + "..."
+                if len(obj.correlation_id) > 8
+                else obj.correlation_id,
             )
         return "-"
 
@@ -190,7 +192,9 @@ class AuditLogEntryAdmin(admin.ModelAdmin):
         """Display formatted snapshot JSON"""
         if obj.snapshot:
             formatted = json.dumps(obj.snapshot, indent=2, ensure_ascii=False)
-            return format_html('<pre style="max-height: 300px; overflow: auto;">{}</pre>', formatted)
+            return format_html(
+                '<pre style="max-height: 300px; overflow: auto;">{}</pre>', formatted
+            )
         return "-"
 
     snapshot_formatted.short_description = "Snapshot"
@@ -199,7 +203,9 @@ class AuditLogEntryAdmin(admin.ModelAdmin):
         """Display formatted metadata JSON"""
         if obj.metadata:
             formatted = json.dumps(obj.metadata, indent=2, ensure_ascii=False)
-            return format_html('<pre style="max-height: 200px; overflow: auto;">{}</pre>', formatted)
+            return format_html(
+                '<pre style="max-height: 200px; overflow: auto;">{}</pre>', formatted
+            )
         return "-"
 
     metadata_formatted.short_description = "Metadata"
@@ -208,7 +214,9 @@ class AuditLogEntryAdmin(admin.ModelAdmin):
         """Display formatted body JSON"""
         if obj.body:
             formatted = json.dumps(obj.body, indent=2, ensure_ascii=False)
-            return format_html('<pre style="max-height: 200px; overflow: auto;">{}</pre>', formatted)
+            return format_html(
+                '<pre style="max-height: 200px; overflow: auto;">{}</pre>', formatted
+            )
         return "-"
 
     body_formatted.short_description = "Request Body"
@@ -226,9 +234,7 @@ class AuditLogEntryAdmin(admin.ModelAdmin):
         return False
 
     class Media:
-        css = {
-            "all": ("admin/css/audit_log_admin.css",)
-        }
+        css = {"all": ("admin/css/audit_log_admin.css",)}
 
 
 @admin.register(APIRequestLog)
@@ -239,163 +245,187 @@ class APIRequestLogAdmin(admin.ModelAdmin):
 
     # List display configuration
     list_display = [
-        'timestamp',
-        'http_method',
-        'endpoint',
-        'response_status',
-        'response_time_ms',
-        'username',
-        'ip_address',
+        "timestamp",
+        "http_method",
+        "endpoint",
+        "response_status",
+        "response_time_ms",
+        "username",
+        "ip_address",
     ]
 
     # Filters
     list_filter = [
-        'http_method',
-        'response_status',
-        'auth_method',
-        'auth_success',
-        'throttled',
-        'api_type',
-        ('timestamp', admin.DateFieldListFilter),
+        "http_method",
+        "response_status",
+        "auth_method",
+        "auth_success",
+        "throttled",
+        "api_type",
+        ("timestamp", admin.DateFieldListFilter),
     ]
 
     # Search
     search_fields = [
-        'correlation_id',
-        'endpoint',
-        'request_path',
-        'username',
-        'ip_address',
-        'user_agent',
-        'error_message',
+        "correlation_id",
+        "endpoint",
+        "request_path",
+        "username",
+        "ip_address",
+        "user_agent",
+        "error_message",
     ]
 
     # Readonly fields (logs should not be edited)
     readonly_fields = [
-        'event_id',
-        'timestamp',
-        'correlation_id',
-        'endpoint',
-        'http_method',
-        'request_path',
-        'content_type',
-        'accept',
-        'referer',
-        'origin',
-        'request_body_hash',
-        'request_size',
-        'query_params',
-        'response_status',
-        'response_time_ms',
-        'response_body_hash',
-        'response_size',
-        'response_headers',
-        'user_id',
-        'username',
-        'session_id',
-        'ip_address',
-        'user_agent',
-        'auth_method',
-        'auth_success',
-        'permission_checks',
-        'throttled',
-        'rate_limit_remaining',
-        'validation_errors',
-        'error_message',
-        'traceback_hash',
-        'api_version',
-        'api_type',
-        'resource_type',
-        'resource_id',
-        'hash_prev',
-        'hash_current',
+        "event_id",
+        "timestamp",
+        "correlation_id",
+        "endpoint",
+        "http_method",
+        "request_path",
+        "content_type",
+        "accept",
+        "referer",
+        "origin",
+        "request_body_hash",
+        "request_size",
+        "query_params",
+        "response_status",
+        "response_time_ms",
+        "response_body_hash",
+        "response_size",
+        "response_headers",
+        "user_id",
+        "username",
+        "session_id",
+        "ip_address",
+        "user_agent",
+        "auth_method",
+        "auth_success",
+        "permission_checks",
+        "throttled",
+        "rate_limit_remaining",
+        "validation_errors",
+        "error_message",
+        "traceback_hash",
+        "api_version",
+        "api_type",
+        "resource_type",
+        "resource_id",
+        "hash_prev",
+        "hash_current",
     ]
 
     # Ordering
-    ordering = ['-timestamp']
+    ordering = ["-timestamp"]
 
     # Pagination
     list_per_page = 50
 
     # Date hierarchy
-    date_hierarchy = 'timestamp'
+    date_hierarchy = "timestamp"
 
     # Fieldsets for detail view
     fieldsets = (
-        ('Request Information', {
-            'fields': (
-                'event_id',
-                'timestamp',
-                'correlation_id',
-                'endpoint',
-                'http_method',
-                'request_path',
-            )
-        }),
-        ('Request Headers', {
-            'fields': (
-                'content_type',
-                'accept',
-                'referer',
-                'origin',
-                'user_agent',
-            ),
-            'classes': ('collapse',),
-        }),
-        ('Request Body', {
-            'fields': (
-                'request_body_hash',
-                'request_size',
-                'query_params',
-            ),
-            'classes': ('collapse',),
-        }),
-        ('Response Information', {
-            'fields': (
-                'response_status',
-                'response_time_ms',
-                'response_size',
-                'response_body_hash',
-                'response_headers',
-            )
-        }),
-        ('User & Session', {
-            'fields': (
-                'user_id',
-                'username',
-                'session_id',
-                'ip_address',
-                'auth_method',
-                'auth_success',
-            )
-        }),
-        ('Security & Permissions', {
-            'fields': (
-                'permission_checks',
-                'throttled',
-                'rate_limit_remaining',
-                'validation_errors',
-                'error_message',
-                'traceback_hash',
-            ),
-            'classes': ('collapse',),
-        }),
-        ('API Metadata', {
-            'fields': (
-                'api_version',
-                'api_type',
-                'resource_type',
-                'resource_id',
-            ),
-            'classes': ('collapse',),
-        }),
-        ('Cryptographic Integrity', {
-            'fields': (
-                'hash_current',
-                'hash_prev',
-            ),
-            'classes': ('collapse',),
-        }),
+        (
+            "Request Information",
+            {
+                "fields": (
+                    "event_id",
+                    "timestamp",
+                    "correlation_id",
+                    "endpoint",
+                    "http_method",
+                    "request_path",
+                )
+            },
+        ),
+        (
+            "Request Headers",
+            {
+                "fields": (
+                    "content_type",
+                    "accept",
+                    "referer",
+                    "origin",
+                    "user_agent",
+                ),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Request Body",
+            {
+                "fields": (
+                    "request_body_hash",
+                    "request_size",
+                    "query_params",
+                ),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Response Information",
+            {
+                "fields": (
+                    "response_status",
+                    "response_time_ms",
+                    "response_size",
+                    "response_body_hash",
+                    "response_headers",
+                )
+            },
+        ),
+        (
+            "User & Session",
+            {
+                "fields": (
+                    "user_id",
+                    "username",
+                    "session_id",
+                    "ip_address",
+                    "auth_method",
+                    "auth_success",
+                )
+            },
+        ),
+        (
+            "Security & Permissions",
+            {
+                "fields": (
+                    "permission_checks",
+                    "throttled",
+                    "rate_limit_remaining",
+                    "validation_errors",
+                    "error_message",
+                    "traceback_hash",
+                ),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "API Metadata",
+            {
+                "fields": (
+                    "api_version",
+                    "api_type",
+                    "resource_type",
+                    "resource_id",
+                ),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Cryptographic Integrity",
+            {
+                "fields": (
+                    "hash_current",
+                    "hash_prev",
+                ),
+                "classes": ("collapse",),
+            },
+        ),
     )
 
     def has_add_permission(self, request):
@@ -427,21 +457,31 @@ class APIRequestLogAdmin(admin.ModelAdmin):
             from django.db.models import Avg, Count
 
             stats = recent_logs.aggregate(
-                total=Count('event_id'),
-                avg_response_time=Avg('response_time_ms'),
+                total=Count("event_id"),
+                avg_response_time=Avg("response_time_ms"),
             )
 
-            status_dist = recent_logs.values('response_status').annotate(
-                count=Count('response_status')
-            ).order_by('-count')[:5]
+            status_dist = (
+                recent_logs.values("response_status")
+                .annotate(count=Count("response_status"))
+                .order_by("-count")[:5]
+            )
 
-            extra_context.update({
-                'stats': {
-                    'total_24h': stats['total'],
-                    'avg_response_time': round(stats['avg_response_time'] or 0, 2),
-                    'status_distribution': status_dist,
-                    'error_rate': recent_logs.filter(response_status__gte=400).count() / stats['total'] * 100 if stats['total'] > 0 else 0,
+            extra_context.update(
+                {
+                    "stats": {
+                        "total_24h": stats["total"],
+                        "avg_response_time": round(stats["avg_response_time"] or 0, 2),
+                        "status_distribution": status_dist,
+                        "error_rate": recent_logs.filter(
+                            response_status__gte=400
+                        ).count()
+                        / stats["total"]
+                        * 100
+                        if stats["total"] > 0
+                        else 0,
+                    }
                 }
-            })
+            )
 
         return super().changelist_view(request, extra_context=extra_context)

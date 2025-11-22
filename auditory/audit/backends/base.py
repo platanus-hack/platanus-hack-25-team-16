@@ -24,4 +24,10 @@ def canonical_json(payload: Any) -> str:
                 return obj.isoformat()
             return super().default(obj)
 
-    return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False, cls=CanonicalEncoder)
+    return json.dumps(
+        payload,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        cls=CanonicalEncoder,
+    )

@@ -17,15 +17,24 @@ class RequestCollector:
     """
 
     SENSITIVE_HEADERS = {
-        'authorization', 'cookie', 'x-api-key',
-        'x-auth-token', 'proxy-authorization',
-        'x-csrf-token', 'x-xsrf-token'
+        "authorization",
+        "cookie",
+        "x-api-key",
+        "x-auth-token",
+        "proxy-authorization",
+        "x-csrf-token",
+        "x-xsrf-token",
     }
 
     IMPORTANT_HEADERS = {
-        'content-type', 'accept', 'referer',
-        'origin', 'x-requested-with', 'user-agent',
-        'accept-language', 'accept-encoding'
+        "content-type",
+        "accept",
+        "referer",
+        "origin",
+        "x-requested-with",
+        "user-agent",
+        "accept-language",
+        "accept-encoding",
     }
 
     def collect(self, request: HttpRequest) -> Dict[str, Any]:
@@ -39,15 +48,15 @@ class RequestCollector:
             Dictionary containing sanitized request metadata
         """
         return {
-            'endpoint': self._extract_endpoint(request.path),
-            'content_type': request.META.get('CONTENT_TYPE', ''),
-            'accept': request.META.get('HTTP_ACCEPT', ''),
-            'referer': request.META.get('HTTP_REFERER', ''),
-            'origin': request.META.get('HTTP_ORIGIN', ''),
-            'body_hash': self._hash_body(request),
-            'size': self._get_request_size(request),
-            'query_params': self._sanitize_params(dict(request.GET)),
-            'headers': self._collect_headers(request),
+            "endpoint": self._extract_endpoint(request.path),
+            "content_type": request.META.get("CONTENT_TYPE", ""),
+            "accept": request.META.get("HTTP_ACCEPT", ""),
+            "referer": request.META.get("HTTP_REFERER", ""),
+            "origin": request.META.get("HTTP_ORIGIN", ""),
+            "body_hash": self._hash_body(request),
+            "size": self._get_request_size(request),
+            "query_params": self._sanitize_params(dict(request.GET)),
+            "headers": self._collect_headers(request),
         }
 
     def _extract_endpoint(self, path: str) -> str:
@@ -60,18 +69,18 @@ class RequestCollector:
         """
         # Replace UUIDs with placeholder
         path = re.sub(
-            r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}',
-            '{uuid}',
+            r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+            "{uuid}",
             path,
-            flags=re.IGNORECASE
+            flags=re.IGNORECASE,
         )
 
         # Replace numeric IDs with placeholder
-        path = re.sub(r'/\d+/', '/{id}/', path)
-        path = re.sub(r'/\d+$', '/{id}', path)
+        path = re.sub(r"/\d+/", "/{id}/", path)
+        path = re.sub(r"/\d+$", "/{id}", path)
 
         # Replace hex strings (potential tokens/hashes)
-        path = re.sub(r'/[0-9a-f]{32,}/', '/{hash}/', path, flags=re.IGNORECASE)
+        path = re.sub(r"/[0-9a-f]{32,}/", "/{hash}/", path, flags=re.IGNORECASE)
 
         return path
 
@@ -80,8 +89,8 @@ class RequestCollector:
         Calculate SHA256 hash of request body for integrity verification.
         """
         try:
-            body = getattr(request, '_body', b'')
-            if not body and hasattr(request, 'body'):
+            body = getattr(request, "_body", b"")
+            if not body and hasattr(request, "body"):
                 body = request.body
 
             if body:
@@ -96,15 +105,15 @@ class RequestCollector:
         Calculate the size of the request in bytes.
         """
         try:
-            if hasattr(request, '_body'):
+            if hasattr(request, "_body"):
                 return len(request._body)
-            elif hasattr(request, 'body'):
+            elif hasattr(request, "body"):
                 return len(request.body)
         except Exception:
             pass
 
         # Fallback to Content-Length header
-        content_length = request.META.get('CONTENT_LENGTH', '0')
+        content_length = request.META.get("CONTENT_LENGTH", "0")
         try:
             return int(content_length)
         except (ValueError, TypeError):
@@ -116,6 +125,7 @@ class RequestCollector:
         """
         try:
             from ..audit.sanitizer import sanitize_value
+
             policy = security_state.get_policy()
             return sanitize_value(params, policy)
         except Exception:
@@ -126,13 +136,13 @@ class RequestCollector:
         """
         Basic sanitization when policy is not available.
         """
-        sensitive_keys = {'password', 'token', 'secret', 'api_key', 'auth'}
+        sensitive_keys = {"password", "token", "secret", "api_key", "auth"}
         sanitized = {}
 
         for key, value in data.items():
             key_lower = key.lower()
             if any(sensitive in key_lower for sensitive in sensitive_keys):
-                sanitized[key] = '***REDACTED***'
+                sanitized[key] = "***REDACTED***"
             else:
                 sanitized[key] = value
 
@@ -145,15 +155,17 @@ class RequestCollector:
         headers = {}
 
         for key, value in request.META.items():
-            if key.startswith('HTTP_'):
-                header_name = key[5:].lower().replace('_', '-')
+            if key.startswith("HTTP_"):
+                header_name = key[5:].lower().replace("_", "-")
 
                 # Skip sensitive headers
                 if header_name in self.SENSITIVE_HEADERS:
                     continue
 
                 # Include important headers or those starting with x-
-                if header_name in self.IMPORTANT_HEADERS or header_name.startswith('x-'):
+                if header_name in self.IMPORTANT_HEADERS or header_name.startswith(
+                    "x-"
+                ):
                     # Limit header value length to prevent huge headers
                     headers[header_name] = value[:500] if len(value) > 500 else value
 
@@ -177,13 +189,13 @@ class ResponseCollector:
             Dictionary containing response metadata
         """
         return {
-            'status': response.status_code,
-            'response_time_ms': response_time_ms,
-            'body_hash': self._hash_response_body(response),
-            'size': self._calculate_size(response),
-            'throttled': self._check_throttled(response),
-            'rate_limit_remaining': self._get_rate_limit(response),
-            'headers': self._collect_response_headers(response),
+            "status": response.status_code,
+            "response_time_ms": response_time_ms,
+            "body_hash": self._hash_response_body(response),
+            "size": self._calculate_size(response),
+            "throttled": self._check_throttled(response),
+            "rate_limit_remaining": self._get_rate_limit(response),
+            "headers": self._collect_response_headers(response),
         }
 
     def _hash_response_body(self, response: HttpResponse) -> Optional[str]:
@@ -209,7 +221,7 @@ class ResponseCollector:
             return len(response.content)
         except Exception:
             # If content is not accessible, try Content-Length header
-            content_length = response.get('Content-Length', '0')
+            content_length = response.get("Content-Length", "0")
             try:
                 return int(content_length)
             except (ValueError, TypeError):
@@ -224,7 +236,7 @@ class ResponseCollector:
             return True
 
         # Check for rate limit headers
-        if response.get('X-RateLimit-Remaining') == '0':
+        if response.get("X-RateLimit-Remaining") == "0":
             return True
 
         return False
@@ -233,7 +245,7 @@ class ResponseCollector:
         """
         Extract rate limit information from response headers.
         """
-        rate_limit = response.get('X-RateLimit-Remaining')
+        rate_limit = response.get("X-RateLimit-Remaining")
         if rate_limit:
             try:
                 return int(rate_limit)
@@ -246,17 +258,17 @@ class ResponseCollector:
         Collect important response headers for audit.
         """
         important_headers = [
-            'content-type',
-            'cache-control',
-            'x-correlation-id',
-            'x-request-id',
-            'x-ratelimit-limit',
-            'x-ratelimit-remaining',
-            'x-ratelimit-reset',
-            'etag',
-            'last-modified',
-            'location',  # For redirects
-            'retry-after',  # For rate limiting
+            "content-type",
+            "cache-control",
+            "x-correlation-id",
+            "x-request-id",
+            "x-ratelimit-limit",
+            "x-ratelimit-remaining",
+            "x-ratelimit-reset",
+            "etag",
+            "last-modified",
+            "location",  # For redirects
+            "retry-after",  # For rate limiting
         ]
 
         headers = {}

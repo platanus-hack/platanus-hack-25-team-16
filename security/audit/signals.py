@@ -66,8 +66,15 @@ def register_signals(cfg: Dict[str, Any], backend, policy=None) -> None:
         model_class = apps.get_model(dotted)
         if model_class is None:
             continue
-        if model_class._meta.model_name == "auditlogentry" and model_class._meta.app_label == "security":
+        if (
+            model_class._meta.model_name == "auditlogentry"
+            and model_class._meta.app_label == "security"
+        ):
             continue
 
-        post_save.connect(partial(_handle_save, backend), sender=model_class, weak=False)
-        post_delete.connect(partial(_handle_delete, backend), sender=model_class, weak=False)
+        post_save.connect(
+            partial(_handle_save, backend), sender=model_class, weak=False
+        )
+        post_delete.connect(
+            partial(_handle_delete, backend), sender=model_class, weak=False
+        )

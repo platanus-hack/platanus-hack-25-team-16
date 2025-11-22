@@ -13,7 +13,11 @@ class Command(BaseCommand):
 
         result = backend.verify_chain()
         if result["ok"]:
-            self.stdout.write(self.style.SUCCESS(f"Cadena verificada. Registros revisados: {result['checked']}"))
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"Cadena verificada. Registros revisados: {result['checked']}"
+                )
+            )
         else:
             mismatches = ", ".join(map(str, result["mismatches"]))
             raise CommandError(f"Inconsistencias detectadas en IDs: {mismatches}")

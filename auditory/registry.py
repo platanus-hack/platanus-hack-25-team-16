@@ -16,7 +16,12 @@ class _SecurityStateHolder:
     def __init__(self) -> None:
         self._state: Optional[_SecurityState] = None
 
-    def set(self, config: Dict[str, Any], backend: BaseAuditBackend, policy: Optional[BaseMaskingPolicy]) -> None:
+    def set(
+        self,
+        config: Dict[str, Any],
+        backend: BaseAuditBackend,
+        policy: Optional[BaseMaskingPolicy],
+    ) -> None:
         self._state = _SecurityState(config=config, backend=backend, policy=policy)
 
     def get_config(self) -> Dict[str, Any]:

@@ -13,7 +13,15 @@ class StrictMasking:
     Política simple basada en listas de claves sensibles.
     """
 
-    SENSITIVE_KEYS = {"password", "token", "secret", "authorization", "api_key", "card", "ssn"}
+    SENSITIVE_KEYS = {
+        "password",
+        "token",
+        "secret",
+        "authorization",
+        "api_key",
+        "card",
+        "ssn",
+    }
     MASK = "***"
 
     def mask_payload(self, payload: Any) -> Any:
@@ -25,7 +33,9 @@ class StrictMasking:
 
     def _mask_value(self, key: str, value: Any) -> Any:
         normalized_key = key.lower()
-        if normalized_key in self.SENSITIVE_KEYS or any(tag in normalized_key for tag in ("pass", "secret", "token")):
+        if normalized_key in self.SENSITIVE_KEYS or any(
+            tag in normalized_key for tag in ("pass", "secret", "token")
+        ):
             return self.MASK
         if isinstance(value, dict):
             return self.mask_payload(value)

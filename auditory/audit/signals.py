@@ -115,10 +115,18 @@ def register_signals(cfg: Dict[str, Any], backend, policy=None) -> None:
                 continue
 
             if _should_audit_model(model_class, audit_cfg):
-                post_save.connect(partial(_handle_save, backend), sender=model_class, weak=False)
-                post_delete.connect(partial(_handle_delete, backend), sender=model_class, weak=False)
+                post_save.connect(
+                    partial(_handle_save, backend), sender=model_class, weak=False
+                )
+                post_delete.connect(
+                    partial(_handle_delete, backend), sender=model_class, weak=False
+                )
     else:
         for model_class in apps.get_models():
             if _should_audit_model(model_class, audit_cfg):
-                post_save.connect(partial(_handle_save, backend), sender=model_class, weak=False)
-                post_delete.connect(partial(_handle_delete, backend), sender=model_class, weak=False)
+                post_save.connect(
+                    partial(_handle_save, backend), sender=model_class, weak=False
+                )
+                post_delete.connect(
+                    partial(_handle_delete, backend), sender=model_class, weak=False
+                )

@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config(
     "SECRET_KEY",
-    default="django-insecure-dev-key-only-for-development-not-for-production-use-this-key-is-not-secure"
+    default="django-insecure-dev-key-only-for-development-not-for-production-use-this-key-is-not-secure",
 )
 DEBUG = config("DEBUG", default=False, cast=bool)
 
@@ -59,6 +59,7 @@ INSTALLED_APPS: list[str] = [
 
 MIDDLEWARE: list[str] = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "auditory.http.HTTPProtectionMiddleware",
     "auditory.audit.middleware.AuditContextMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -406,11 +407,11 @@ SECURITY_CONFIG = {
         "MODELS_BLACKLIST": [
             # BLACKLIST: Modelos que NUNCA se auditarán (solo aplica cuando MODELS está vacío)
             # Los modelos de Django internos suelen ser seguros para excluir
-            "contenttypes.contenttype",      # Tipos de contenido de Django
-            "auth.permission",               # Permisos de Django (raramente cambian)
-            "sessions.session",              # Sesiones (muy volátiles, poco valor de auditoría)
-            "admin.logentry",                # Ya es un log de auditoría de Django
-            "auditory.apirequestlog",        # API request logs (no auditar auditorías)
+            "contenttypes.contenttype",  # Tipos de contenido de Django
+            "auth.permission",  # Permisos de Django (raramente cambian)
+            "sessions.session",  # Sesiones (muy volátiles, poco valor de auditoría)
+            "admin.logentry",  # Ya es un log de auditoría de Django
+            "auditory.apirequestlog",  # API request logs (no auditar auditorías)
             # Agrega aquí otros modelos que no necesites auditar
         ],
         "RETENTION_DAYS": 90,
@@ -426,20 +427,20 @@ SECURITY_CONFIG = {
     "API_REQUEST_LOG": {
         "ENABLED": True,
         "LOG_SUCCESSFUL_REQUESTS": True,  # Log 2xx responses
-        "LOG_CLIENT_ERRORS": True,        # Log 4xx responses
-        "LOG_SERVER_ERRORS": True,        # Log 5xx responses
+        "LOG_CLIENT_ERRORS": True,  # Log 4xx responses
+        "LOG_SERVER_ERRORS": True,  # Log 5xx responses
         "EXCLUDE_PATHS": [
-            "/admin/jsi18n/",       # Django admin i18n
-            "/static/",             # Static files
-            "/media/",              # Media files
-            "/health/",             # Health check endpoint
-            "/metrics/",            # Metrics endpoint
+            "/admin/jsi18n/",  # Django admin i18n
+            "/static/",  # Static files
+            "/media/",  # Media files
+            "/health/",  # Health check endpoint
+            "/metrics/",  # Metrics endpoint
         ],
-        "SAMPLING_RATE": 1.0,      # 1.0 = 100%, 0.1 = 10%
+        "SAMPLING_RATE": 1.0,  # 1.0 = 100%, 0.1 = 10%
         "COLLECT_REQUEST_BODY": True,
         "COLLECT_RESPONSE_BODY_ON_ERROR": True,
-        "MAX_BODY_SIZE": 10240,    # 10KB
-        "ANONYMIZE_IPS": False,    # Set to True for GDPR compliance
-        "RETENTION_DAYS": 180,     # 6 months for compliance
+        "MAX_BODY_SIZE": 10240,  # 10KB
+        "ANONYMIZE_IPS": False,  # Set to True for GDPR compliance
+        "RETENTION_DAYS": 180,  # 6 months for compliance
     },
 }

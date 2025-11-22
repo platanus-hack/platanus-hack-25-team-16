@@ -47,16 +47,18 @@ class APIRequestLoggingMiddleware(MiddlewareMixin):
             logger.warning(f"Failed to collect request data: {e}")
             request._api_request_data = {}
 
-    def process_response(self, request: HttpRequest, response: HttpResponse) -> HttpResponse:
+    def process_response(
+        self, request: HttpRequest, response: HttpResponse
+    ) -> HttpResponse:
         """
         Capture response data and log the complete request/response cycle.
         """
         try:
             # Check if logging is enabled
             cfg = security_state.get_config()
-            api_cfg = cfg.get('API_REQUEST_LOG', {})
+            api_cfg = cfg.get("API_REQUEST_LOG", {})
 
-            if not api_cfg.get('ENABLED', True):
+            if not api_cfg.get("ENABLED", True):
                 return response
 
             # Check if path should be excluded
@@ -68,14 +70,14 @@ class APIRequestLoggingMiddleware(MiddlewareMixin):
                 return response
 
             # Calculate response time
-            start_time = getattr(request, '_api_start_time', time.time())
+            start_time = getattr(request, "_api_start_time", time.time())
             response_time_ms = int((time.time() - start_time) * 1000)
 
             # Get audit context (from AuditContextMiddleware)
             ctx = audit_context.get()
 
             # Get request data collected earlier
-            request_data = getattr(request, '_api_request_data', {})
+            request_data = getattr(request, "_api_request_data", {})
 
             # Collect response data
             response_data = self.response_collector.collect(response, response_time_ms)
@@ -91,25 +93,27 @@ class APIRequestLoggingMiddleware(MiddlewareMixin):
 
         return response
 
-    def process_exception(self, request: HttpRequest, exception: Exception) -> Optional[HttpResponse]:
+    def process_exception(
+        self, request: HttpRequest, exception: Exception
+    ) -> Optional[HttpResponse]:
         """
         Log unhandled exceptions with full context.
         """
         try:
             # Check if logging is enabled
             cfg = security_state.get_config()
-            api_cfg = cfg.get('API_REQUEST_LOG', {})
+            api_cfg = cfg.get("API_REQUEST_LOG", {})
 
-            if not api_cfg.get('ENABLED', True):
+            if not api_cfg.get("ENABLED", True):
                 return None
 
             # Calculate response time
-            start_time = getattr(request, '_api_start_time', time.time())
+            start_time = getattr(request, "_api_start_time", time.time())
             response_time_ms = int((time.time() - start_time) * 1000)
 
             # Get context
             ctx = audit_context.get()
-            request_data = getattr(request, '_api_request_data', {})
+            request_data = getattr(request, "_api_request_data", {})
 
             # Build exception log entry
             log_entry = self._build_exception_log_entry(
@@ -128,7 +132,7 @@ class APIRequestLoggingMiddleware(MiddlewareMixin):
         """
         Check if the path should be excluded from logging.
         """
-        exclude_paths = config.get('EXCLUDE_PATHS', [])
+        exclude_paths = config.get("EXCLUDE_PATHS", [])
         for pattern in exclude_paths:
             if path.startswith(pattern):
                 return True
@@ -139,24 +143,28 @@ class APIRequestLoggingMiddleware(MiddlewareMixin):
         Determine if this request should be logged based on sampling rate.
         """
         import random
-        sampling_rate = config.get('SAMPLING_RATE', 1.0)
+
+        sampling_rate = config.get("SAMPLING_RATE", 1.0)
         return random.random() < sampling_rate
 
-    def _build_log_entry(self, request: HttpRequest,
-                        request_data: Dict[str, Any],
-                        response_data: Dict[str, Any],
-                        context: Dict[str, Any]) -> Dict[str, Any]:
+    def _build_log_entry(
+        self,
+        request: HttpRequest,
+        request_data: Dict[str, Any],
+        response_data: Dict[str, Any],
+        context: Dict[str, Any],
+    ) -> Dict[str, Any]:
         """
         Build the complete log entry dictionary.
         """
         # Extract user information
-        user = getattr(request, 'user', None)
+        user = getattr(request, "user", None)
         user_id = None
         username = None
 
-        if user and hasattr(user, 'is_authenticated') and user.is_authenticated:
-            user_id = getattr(user, 'id', None)
-            username = getattr(user, 'username', None) or str(user) if user else None
+        if user and hasattr(user, "is_authenticated") and user.is_authenticated:
+            user_id = getattr(user, "id", None)
+            username = getattr(user, "username", None) or str(user) if user else None
 
         # Determine authentication method
         auth_method = self._get_auth_method(request)
@@ -166,7 +174,7 @@ class APIRequestLoggingMiddleware(MiddlewareMixin):
         resource_type, resource_id = self._extract_resource_info(request.path)
 
         # Get IP address - try context first, then request directly
-        ip_address = context.get('ip_address')
+        ip_address = context.get("ip_address")
         if not ip_address:
             # Fallback: try to get IP from request directly
             xff = request.META.get("HTTP_X_FORWARDED_FOR")
@@ -179,52 +187,50 @@ class APIRequestLoggingMiddleware(MiddlewareMixin):
 
         return {
             # Context from AuditContextMiddleware
-            'correlation_id': context.get('correlation_id', ''),
-            'ip_address': ip_address,
-            'user_agent': context.get('user_agent', ''),
-
+            "correlation_id": context.get("correlation_id", ""),
+            "ip_address": ip_address,
+            "user_agent": context.get("user_agent", ""),
             # User information
-            'user_id': user_id or context.get('actor'),
-            'username': username or context.get('actor_label'),
-            'session_id': self._get_session_id(request),
-
+            "user_id": user_id or context.get("actor"),
+            "username": username or context.get("actor_label"),
+            "session_id": self._get_session_id(request),
             # Request details
-            'endpoint': request_data.get('endpoint', ''),
-            'http_method': request.method,
-            'request_path': request.get_full_path(),
-            'content_type': request_data.get('content_type', ''),
-            'accept': request_data.get('accept', ''),
-            'referer': request_data.get('referer', ''),
-            'origin': request_data.get('origin', ''),
-            'request_body_hash': request_data.get('body_hash'),
-            'request_size': request_data.get('size', 0),
-            'query_params': request_data.get('query_params', {}),
-
+            "endpoint": request_data.get("endpoint", ""),
+            "http_method": request.method,
+            "request_path": request.get_full_path(),
+            "content_type": request_data.get("content_type", ""),
+            "accept": request_data.get("accept", ""),
+            "referer": request_data.get("referer", ""),
+            "origin": request_data.get("origin", ""),
+            "request_body_hash": request_data.get("body_hash"),
+            "request_size": request_data.get("size", 0),
+            "query_params": request_data.get("query_params", {}),
             # Response details
-            'response_status': response_data.get('status', 0),
-            'response_time_ms': response_data.get('response_time_ms', 0),
-            'response_body_hash': response_data.get('body_hash'),
-            'response_size': response_data.get('size', 0),
-            'response_headers': response_data.get('headers', {}),
-
+            "response_status": response_data.get("status", 0),
+            "response_time_ms": response_data.get("response_time_ms", 0),
+            "response_body_hash": response_data.get("body_hash"),
+            "response_size": response_data.get("size", 0),
+            "response_headers": response_data.get("headers", {}),
             # Security metrics
-            'auth_method': auth_method,
-            'auth_success': response_data.get('status') != 401,
-            'throttled': response_data.get('throttled', False),
-            'rate_limit_remaining': response_data.get('rate_limit_remaining'),
-
+            "auth_method": auth_method,
+            "auth_success": response_data.get("status") != 401,
+            "throttled": response_data.get("throttled", False),
+            "rate_limit_remaining": response_data.get("rate_limit_remaining"),
             # API metadata
-            'api_version': api_version,
-            'api_type': 'rest',  # Can be extended for GraphQL, WebSocket, etc.
-            'resource_type': resource_type,
-            'resource_id': resource_id,
+            "api_version": api_version,
+            "api_type": "rest",  # Can be extended for GraphQL, WebSocket, etc.
+            "resource_type": resource_type,
+            "resource_id": resource_id,
         }
 
-    def _build_exception_log_entry(self, request: HttpRequest,
-                                  request_data: Dict[str, Any],
-                                  exception: Exception,
-                                  response_time_ms: int,
-                                  context: Dict[str, Any]) -> Dict[str, Any]:
+    def _build_exception_log_entry(
+        self,
+        request: HttpRequest,
+        request_data: Dict[str, Any],
+        exception: Exception,
+        response_time_ms: int,
+        context: Dict[str, Any],
+    ) -> Dict[str, Any]:
         """
         Build log entry for unhandled exceptions.
         """
@@ -232,18 +238,20 @@ class APIRequestLoggingMiddleware(MiddlewareMixin):
         log_entry = self._build_log_entry(
             request,
             request_data,
-            {'status': 500, 'response_time_ms': response_time_ms},
-            context
+            {"status": 500, "response_time_ms": response_time_ms},
+            context,
         )
 
         # Add exception details
         tb_str = traceback.format_exc()
-        log_entry.update({
-            'response_status': 500,
-            'error_message': str(exception),
-            'traceback_hash': hashlib.sha256(tb_str.encode()).hexdigest(),
-            'auth_success': False,  # Assume failure for exceptions
-        })
+        log_entry.update(
+            {
+                "response_status": 500,
+                "error_message": str(exception),
+                "traceback_hash": hashlib.sha256(tb_str.encode()).hexdigest(),
+                "auth_success": False,  # Assume failure for exceptions
+            }
+        )
 
         return log_entry
 
@@ -252,23 +260,23 @@ class APIRequestLoggingMiddleware(MiddlewareMixin):
         Determine the authentication method used.
         """
         # Check Authorization header
-        auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+        auth_header = request.META.get("HTTP_AUTHORIZATION", "")
 
-        if auth_header.startswith('Bearer'):
-            return 'jwt'
-        elif auth_header.startswith('Token'):
-            return 'apikey'
-        elif auth_header.startswith('Basic'):
-            return 'basic'
+        if auth_header.startswith("Bearer"):
+            return "jwt"
+        elif auth_header.startswith("Token"):
+            return "apikey"
+        elif auth_header.startswith("Basic"):
+            return "basic"
 
         # Check for session authentication
-        if hasattr(request, 'user') and request.user.is_authenticated:
-            if hasattr(request, 'session') and request.session.session_key:
-                return 'session'
+        if hasattr(request, "user") and request.user.is_authenticated:
+            if hasattr(request, "session") and request.session.session_key:
+                return "session"
 
         # Check for API key in headers or query params
-        if request.META.get('HTTP_X_API_KEY'):
-            return 'apikey'
+        if request.META.get("HTTP_X_API_KEY"):
+            return "apikey"
 
         return None
 
@@ -276,7 +284,7 @@ class APIRequestLoggingMiddleware(MiddlewareMixin):
         """
         Extract session ID if available.
         """
-        if hasattr(request, 'session'):
+        if hasattr(request, "session"):
             return request.session.session_key
         return None
 
@@ -285,7 +293,8 @@ class APIRequestLoggingMiddleware(MiddlewareMixin):
         Extract API version from path (e.g., /api/v1/... -> v1).
         """
         import re
-        match = re.search(r'/api/(v\d+)/', path)
+
+        match = re.search(r"/api/(v\d+)/", path)
         if match:
             return match.group(1)
         return None
@@ -302,9 +311,9 @@ class APIRequestLoggingMiddleware(MiddlewareMixin):
         import re
 
         # Handle Django admin paths
-        if path.startswith('/admin/'):
+        if path.startswith("/admin/"):
             # Pattern: /admin/{app_label}/{model_name}/{id?}/...
-            admin_match = re.search(r'/admin/([^/]+)/([^/]+)(?:/(\d+))?/', path)
+            admin_match = re.search(r"/admin/([^/]+)/([^/]+)(?:/(\d+))?/", path)
             if admin_match:
                 app_label = admin_match.group(1)
                 model_name = admin_match.group(2)
@@ -317,16 +326,18 @@ class APIRequestLoggingMiddleware(MiddlewareMixin):
             return None, None
 
         # Remove API version prefix
-        path = re.sub(r'^/api/v\d+/', '', path)
+        path = re.sub(r"^/api/v\d+/", "", path)
 
         # Split path segments
-        segments = [s for s in path.strip('/').split('/') if s]
+        segments = [s for s in path.strip("/").split("/") if s]
 
         if not segments:
             return None, None
 
         resource_type = segments[0]
-        resource_id = segments[1] if len(segments) > 1 and segments[1].isdigit() else None
+        resource_id = (
+            segments[1] if len(segments) > 1 and segments[1].isdigit() else None
+        )
 
         return resource_type, resource_id
 
@@ -339,7 +350,7 @@ class APIRequestLoggingMiddleware(MiddlewareMixin):
             backend = security_state.get_backend()
 
             # Check if backend supports API logging
-            if hasattr(backend, 'append_api_log'):
+            if hasattr(backend, "append_api_log"):
                 backend.append_api_log(log_data)
             else:
                 # Fallback to direct database save (without hash chain)
@@ -356,10 +367,10 @@ class APIRequestLoggingMiddleware(MiddlewareMixin):
         log_data = {k: v for k, v in log_data.items() if v is not None}
 
         # Set default hashes if not using hash chain
-        if 'hash_prev' not in log_data:
-            log_data['hash_prev'] = '0' * 64
-        if 'hash_current' not in log_data:
-            log_data['hash_current'] = hashlib.sha256(
+        if "hash_prev" not in log_data:
+            log_data["hash_prev"] = "0" * 64
+        if "hash_current" not in log_data:
+            log_data["hash_current"] = hashlib.sha256(
                 json.dumps(log_data, sort_keys=True).encode()
             ).hexdigest()
 

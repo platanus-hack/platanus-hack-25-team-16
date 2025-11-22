@@ -37,14 +37,14 @@ class ISO27001Reporter:
             Dictionary containing all compliance metrics and evidence
         """
         report = {
-            'metadata': self._get_metadata(),
-            'executive_summary': self._generate_executive_summary(),
-            'control_mappings': self._map_controls(),
-            'audit_metrics': self._get_audit_metrics(),
-            'api_metrics': self._get_api_metrics(),
-            'security_events': self._get_security_events(),
-            'data_integrity': self._verify_data_integrity(),
-            'recommendations': self._generate_recommendations(),
+            "metadata": self._get_metadata(),
+            "executive_summary": self._generate_executive_summary(),
+            "control_mappings": self._map_controls(),
+            "audit_metrics": self._get_audit_metrics(),
+            "api_metrics": self._get_api_metrics(),
+            "security_events": self._get_security_events(),
+            "data_integrity": self._verify_data_integrity(),
+            "recommendations": self._generate_recommendations(),
         }
 
         return report
@@ -52,15 +52,15 @@ class ISO27001Reporter:
     def _get_metadata(self) -> Dict[str, Any]:
         """Get report metadata."""
         return {
-            'report_id': timezone.now().strftime('%Y%m%d_%H%M%S'),
-            'generated_at': timezone.now().isoformat(),
-            'reporting_period': {
-                'start': self.start_date.isoformat(),
-                'end': self.end_date.isoformat(),
-                'days': (self.end_date - self.start_date).days,
+            "report_id": timezone.now().strftime("%Y%m%d_%H%M%S"),
+            "generated_at": timezone.now().isoformat(),
+            "reporting_period": {
+                "start": self.start_date.isoformat(),
+                "end": self.end_date.isoformat(),
+                "days": (self.end_date - self.start_date).days,
             },
-            'standard': 'ISO/IEC 27001:2022',
-            'report_version': '1.0',
+            "standard": "ISO/IEC 27001:2022",
+            "report_version": "1.0",
         }
 
     def _generate_executive_summary(self) -> Dict[str, Any]:
@@ -76,24 +76,24 @@ class ISO27001Reporter:
 
         # Check for security issues
         security_issues = APIRequestLog.objects.filter(
-            timestamp__range=(self.start_date, self.end_date),
-            response_status__gte=500
+            timestamp__range=(self.start_date, self.end_date), response_status__gte=500
         ).count()
 
         failed_auth = APIRequestLog.objects.filter(
-            timestamp__range=(self.start_date, self.end_date),
-            response_status=401
+            timestamp__range=(self.start_date, self.end_date), response_status=401
         ).count()
 
         return {
-            'compliance_status': 'COMPLIANT' if security_issues < 100 else 'NEEDS_REVIEW',
-            'total_events_logged': audit_logs + api_logs,
-            'audit_logs': audit_logs,
-            'api_requests': api_logs,
-            'security_incidents': security_issues,
-            'failed_authentications': failed_auth,
-            'coverage_percentage': self._calculate_coverage(),
-            'risk_level': self._assess_risk_level(security_issues, failed_auth),
+            "compliance_status": "COMPLIANT"
+            if security_issues < 100
+            else "NEEDS_REVIEW",
+            "total_events_logged": audit_logs + api_logs,
+            "audit_logs": audit_logs,
+            "api_requests": api_logs,
+            "security_incidents": security_issues,
+            "failed_authentications": failed_auth,
+            "coverage_percentage": self._calculate_coverage(),
+            "risk_level": self._assess_risk_level(security_issues, failed_auth),
         }
 
     def _map_controls(self) -> Dict[str, Dict[str, Any]]:
@@ -101,82 +101,87 @@ class ISO27001Reporter:
         controls = {}
 
         # A.8.15 - Logging
-        controls['A.8.15'] = {
-            'title': 'Logging',
-            'status': 'IMPLEMENTED',
-            'evidence': {
-                'total_logs': AuditLogEntry.objects.count() + APIRequestLog.objects.count(),
-                'log_types': ['audit_logs', 'api_logs'],
-                'retention_days': 180,
-                'fields_captured': [
-                    'timestamp', 'user_id', 'ip_address',
-                    'action', 'resource', 'status'
+        controls["A.8.15"] = {
+            "title": "Logging",
+            "status": "IMPLEMENTED",
+            "evidence": {
+                "total_logs": AuditLogEntry.objects.count()
+                + APIRequestLog.objects.count(),
+                "log_types": ["audit_logs", "api_logs"],
+                "retention_days": 180,
+                "fields_captured": [
+                    "timestamp",
+                    "user_id",
+                    "ip_address",
+                    "action",
+                    "resource",
+                    "status",
                 ],
             },
-            'implementation_details': 'Comprehensive logging via auditory module with hash chain integrity',
+            "implementation_details": "Comprehensive logging via auditory module with hash chain integrity",
         }
 
         # A.5.33 - Protection of records
-        controls['A.5.33'] = {
-            'title': 'Protection of records',
-            'status': 'IMPLEMENTED',
-            'evidence': {
-                'integrity_mechanism': 'HMAC-SHA256 hash chain',
-                'tamper_detection': 'Cryptographic verification',
-                'immutability': True,
-                'verification_command': 'python manage.py verify_api_logs',
+        controls["A.5.33"] = {
+            "title": "Protection of records",
+            "status": "IMPLEMENTED",
+            "evidence": {
+                "integrity_mechanism": "HMAC-SHA256 hash chain",
+                "tamper_detection": "Cryptographic verification",
+                "immutability": True,
+                "verification_command": "python manage.py verify_api_logs",
             },
-            'implementation_details': 'Hash chain ensures tamper-evident logging',
+            "implementation_details": "Hash chain ensures tamper-evident logging",
         }
 
         # A.8.16 - Monitoring activities
-        controls['A.8.16'] = {
-            'title': 'Monitoring activities',
-            'status': 'IMPLEMENTED',
-            'evidence': {
-                'real_time_monitoring': True,
-                'api_requests_logged': APIRequestLog.objects.count(),
-                'model_changes_logged': AuditLogEntry.objects.count(),
-                'alert_mechanisms': 'Management commands for verification',
+        controls["A.8.16"] = {
+            "title": "Monitoring activities",
+            "status": "IMPLEMENTED",
+            "evidence": {
+                "real_time_monitoring": True,
+                "api_requests_logged": APIRequestLog.objects.count(),
+                "model_changes_logged": AuditLogEntry.objects.count(),
+                "alert_mechanisms": "Management commands for verification",
             },
-            'implementation_details': 'Real-time monitoring of all API requests and model changes',
+            "implementation_details": "Real-time monitoring of all API requests and model changes",
         }
 
         # A.8.9 - Configuration management
-        controls['A.8.9'] = {
-            'title': 'Configuration management',
-            'status': 'IMPLEMENTED',
-            'evidence': {
-                'configuration_file': 'SECURITY_CONFIG in settings.py',
-                'validation': 'Startup validation in AppConfig',
-                'environment_aware': True,
+        controls["A.8.9"] = {
+            "title": "Configuration management",
+            "status": "IMPLEMENTED",
+            "evidence": {
+                "configuration_file": "SECURITY_CONFIG in settings.py",
+                "validation": "Startup validation in AppConfig",
+                "environment_aware": True,
             },
-            'implementation_details': 'Centralized security configuration with validation',
+            "implementation_details": "Centralized security configuration with validation",
         }
 
         # A.8.23 - Web filtering
-        controls['A.8.23'] = {
-            'title': 'Web filtering',
-            'status': 'PARTIALLY_IMPLEMENTED',
-            'evidence': {
-                'input_sanitization': True,
-                'pii_masking': True,
-                'output_encoding': True,
+        controls["A.8.23"] = {
+            "title": "Web filtering",
+            "status": "PARTIALLY_IMPLEMENTED",
+            "evidence": {
+                "input_sanitization": True,
+                "pii_masking": True,
+                "output_encoding": True,
             },
-            'implementation_details': 'PII masking and input sanitization implemented',
-            'gaps': ['Content Security Policy could be stricter'],
+            "implementation_details": "PII masking and input sanitization implemented",
+            "gaps": ["Content Security Policy could be stricter"],
         }
 
         # A.8.28 - Secure coding
-        controls['A.8.28'] = {
-            'title': 'Secure coding',
-            'status': 'IMPLEMENTED',
-            'evidence': {
-                'sensitive_data_handling': 'PII masking policy',
-                'password_protection': 'Never logged in plain text',
-                'error_handling': 'Sanitized error messages',
+        controls["A.8.28"] = {
+            "title": "Secure coding",
+            "status": "IMPLEMENTED",
+            "evidence": {
+                "sensitive_data_handling": "PII masking policy",
+                "password_protection": "Never logged in plain text",
+                "error_handling": "Sanitized error messages",
             },
-            'implementation_details': 'Secure coding practices enforced through policies',
+            "implementation_details": "Secure coding practices enforced through policies",
         }
 
         return controls
@@ -188,33 +193,36 @@ class ISO27001Reporter:
         )
 
         # Actions distribution
-        actions = queryset.values('action').annotate(
-            count=Count('action')
-        ).order_by('-count')
+        actions = (
+            queryset.values("action").annotate(count=Count("action")).order_by("-count")
+        )
 
         # Most modified models
-        models = queryset.values('app_label', 'model').annotate(
-            count=Count('id')
-        ).order_by('-count')[:10]
+        models = (
+            queryset.values("app_label", "model")
+            .annotate(count=Count("id"))
+            .order_by("-count")[:10]
+        )
 
         # Active users
-        active_users = queryset.exclude(
-            actor__isnull=True
-        ).values('actor', 'actor_label').annotate(
-            actions=Count('id')
-        ).order_by('-actions')[:10]
+        active_users = (
+            queryset.exclude(actor__isnull=True)
+            .values("actor", "actor_label")
+            .annotate(actions=Count("id"))
+            .order_by("-actions")[:10]
+        )
 
         return {
-            'total_changes': queryset.count(),
-            'actions': {item['action']: item['count'] for item in actions},
-            'top_models': [
+            "total_changes": queryset.count(),
+            "actions": {item["action"]: item["count"] for item in actions},
+            "top_models": [
                 f"{item['app_label']}.{item['model']}: {item['count']}"
                 for item in models
             ],
-            'active_users': [
+            "active_users": [
                 {
-                    'user': item['actor_label'] or item['actor'],
-                    'actions': item['actions']
+                    "user": item["actor_label"] or item["actor"],
+                    "actions": item["actions"],
                 }
                 for item in active_users
             ],
@@ -227,58 +235,62 @@ class ISO27001Reporter:
         )
 
         # Response status distribution
-        status_dist = queryset.values('response_status').annotate(
-            count=Count('response_status')
-        ).order_by('response_status')
+        status_dist = (
+            queryset.values("response_status")
+            .annotate(count=Count("response_status"))
+            .order_by("response_status")
+        )
 
         # Calculate percentages
         total_requests = queryset.count()
         success_rate = 0
         if total_requests > 0:
             success_count = queryset.filter(
-                response_status__gte=200,
-                response_status__lt=300
+                response_status__gte=200, response_status__lt=300
             ).count()
             success_rate = (success_count / total_requests) * 100
 
         # Performance metrics
         performance = queryset.aggregate(
-            avg_response_time=Avg('response_time_ms'),
-            max_response_time=Max('response_time_ms'),
-            min_response_time=Min('response_time_ms'),
+            avg_response_time=Avg("response_time_ms"),
+            max_response_time=Max("response_time_ms"),
+            min_response_time=Min("response_time_ms"),
         )
 
         # Top endpoints
-        endpoints = queryset.values('endpoint').annotate(
-            requests=Count('endpoint'),
-            avg_time=Avg('response_time_ms')
-        ).order_by('-requests')[:10]
+        endpoints = (
+            queryset.values("endpoint")
+            .annotate(requests=Count("endpoint"), avg_time=Avg("response_time_ms"))
+            .order_by("-requests")[:10]
+        )
 
         # Authentication methods
-        auth_methods = queryset.exclude(
-            auth_method__isnull=True
-        ).values('auth_method').annotate(
-            count=Count('auth_method')
-        ).order_by('-count')
+        auth_methods = (
+            queryset.exclude(auth_method__isnull=True)
+            .values("auth_method")
+            .annotate(count=Count("auth_method"))
+            .order_by("-count")
+        )
 
         return {
-            'total_requests': total_requests,
-            'success_rate': f"{success_rate:.2f}%",
-            'status_codes': {
-                str(item['response_status']): item['count']
-                for item in status_dist
+            "total_requests": total_requests,
+            "success_rate": f"{success_rate:.2f}%",
+            "status_codes": {
+                str(item["response_status"]): item["count"] for item in status_dist
             },
-            'performance': performance,
-            'top_endpoints': [
+            "performance": performance,
+            "top_endpoints": [
                 {
-                    'endpoint': item['endpoint'],
-                    'requests': item['requests'],
-                    'avg_time_ms': round(item['avg_time'], 2) if item['avg_time'] else 0
+                    "endpoint": item["endpoint"],
+                    "requests": item["requests"],
+                    "avg_time_ms": round(item["avg_time"], 2)
+                    if item["avg_time"]
+                    else 0,
                 }
                 for item in endpoints
             ],
-            'auth_methods': {
-                item['auth_method'] or 'anonymous': item['count']
+            "auth_methods": {
+                item["auth_method"] or "anonymous": item["count"]
                 for item in auth_methods
             },
         }
@@ -293,9 +305,12 @@ class ISO27001Reporter:
         failed_auth = queryset.filter(response_status=401)
 
         # Suspicious IPs (multiple failed auth attempts)
-        suspicious_ips = failed_auth.values('ip_address').annotate(
-            attempts=Count('ip_address')
-        ).filter(attempts__gte=5).order_by('-attempts')
+        suspicious_ips = (
+            failed_auth.values("ip_address")
+            .annotate(attempts=Count("ip_address"))
+            .filter(attempts__gte=5)
+            .order_by("-attempts")
+        )
 
         # Server errors (potential security issues)
         server_errors = queryset.filter(response_status__gte=500)
@@ -307,28 +322,25 @@ class ISO27001Reporter:
         forbidden = queryset.filter(response_status=403)
 
         return {
-            'failed_authentications': {
-                'total': failed_auth.count(),
-                'unique_ips': failed_auth.values('ip_address').distinct().count(),
-                'suspicious_ips': [
-                    {
-                        'ip': item['ip_address'],
-                        'attempts': item['attempts']
-                    }
+            "failed_authentications": {
+                "total": failed_auth.count(),
+                "unique_ips": failed_auth.values("ip_address").distinct().count(),
+                "suspicious_ips": [
+                    {"ip": item["ip_address"], "attempts": item["attempts"]}
                     for item in suspicious_ips
                 ],
             },
-            'server_errors': {
-                'total': server_errors.count(),
-                'endpoints': server_errors.values('endpoint').annotate(
-                    count=Count('endpoint')
-                ).order_by('-count')[:5],
+            "server_errors": {
+                "total": server_errors.count(),
+                "endpoints": server_errors.values("endpoint")
+                .annotate(count=Count("endpoint"))
+                .order_by("-count")[:5],
             },
-            'rate_limiting': {
-                'throttled_requests': rate_limited.count(),
+            "rate_limiting": {
+                "throttled_requests": rate_limited.count(),
             },
-            'access_violations': {
-                'forbidden_attempts': forbidden.count(),
+            "access_violations": {
+                "forbidden_attempts": forbidden.count(),
             },
         }
 
@@ -339,32 +351,40 @@ class ISO27001Reporter:
         backend = security_state.get_backend()
 
         # Verify audit log chain
-        audit_result = {'status': 'NOT_VERIFIED', 'details': 'Backend does not support verification'}
-        if hasattr(backend, 'verify_chain'):
+        audit_result = {
+            "status": "NOT_VERIFIED",
+            "details": "Backend does not support verification",
+        }
+        if hasattr(backend, "verify_chain"):
             result = backend.verify_chain()
             audit_result = {
-                'status': 'VALID' if result['ok'] else 'COMPROMISED',
-                'checked': result['checked'],
-                'issues': result.get('mismatches', []),
+                "status": "VALID" if result["ok"] else "COMPROMISED",
+                "checked": result["checked"],
+                "issues": result.get("mismatches", []),
             }
 
         # Verify API log chain
-        api_result = {'status': 'NOT_VERIFIED', 'details': 'Backend does not support verification'}
-        if hasattr(backend, 'verify_api_chain'):
+        api_result = {
+            "status": "NOT_VERIFIED",
+            "details": "Backend does not support verification",
+        }
+        if hasattr(backend, "verify_api_chain"):
             result = backend.verify_api_chain()
             api_result = {
-                'status': 'VALID' if result['ok'] else 'COMPROMISED',
-                'checked': result['checked'],
-                'issues': result.get('mismatches', []),
+                "status": "VALID" if result["ok"] else "COMPROMISED",
+                "checked": result["checked"],
+                "issues": result.get("mismatches", []),
             }
 
         return {
-            'audit_logs': audit_result,
-            'api_logs': api_result,
-            'overall_status': 'VALID' if (
-                audit_result.get('status') == 'VALID' and
-                api_result.get('status') == 'VALID'
-            ) else 'NEEDS_REVIEW',
+            "audit_logs": audit_result,
+            "api_logs": api_result,
+            "overall_status": "VALID"
+            if (
+                audit_result.get("status") == "VALID"
+                and api_result.get("status") == "VALID"
+            )
+            else "NEEDS_REVIEW",
         }
 
     def _calculate_coverage(self) -> float:
@@ -387,11 +407,11 @@ class ISO27001Reporter:
     def _assess_risk_level(self, security_issues: int, failed_auth: int) -> str:
         """Assess overall risk level based on security metrics."""
         if security_issues > 100 or failed_auth > 500:
-            return 'HIGH'
+            return "HIGH"
         elif security_issues > 50 or failed_auth > 100:
-            return 'MEDIUM'
+            return "MEDIUM"
         else:
-            return 'LOW'
+            return "LOW"
 
     def _generate_recommendations(self) -> List[str]:
         """Generate recommendations based on analysis."""
@@ -399,8 +419,7 @@ class ISO27001Reporter:
 
         # Check for high error rates
         error_rate = APIRequestLog.objects.filter(
-            timestamp__range=(self.start_date, self.end_date),
-            response_status__gte=500
+            timestamp__range=(self.start_date, self.end_date), response_status__gte=500
         ).count()
 
         total = APIRequestLog.objects.filter(
@@ -413,12 +432,14 @@ class ISO27001Reporter:
             )
 
         # Check for suspicious activity
-        suspicious = APIRequestLog.objects.filter(
-            timestamp__range=(self.start_date, self.end_date),
-            response_status=401
-        ).values('ip_address').annotate(
-            attempts=Count('ip_address')
-        ).filter(attempts__gte=10)
+        suspicious = (
+            APIRequestLog.objects.filter(
+                timestamp__range=(self.start_date, self.end_date), response_status=401
+            )
+            .values("ip_address")
+            .annotate(attempts=Count("ip_address"))
+            .filter(attempts__gte=10)
+        )
 
         if suspicious.exists():
             recommendations.append(
@@ -429,7 +450,7 @@ class ISO27001Reporter:
         # Check average response time
         avg_response = APIRequestLog.objects.filter(
             timestamp__range=(self.start_date, self.end_date)
-        ).aggregate(avg=Avg('response_time_ms'))['avg']
+        ).aggregate(avg=Avg("response_time_ms"))["avg"]
 
         if avg_response and avg_response > 1000:
             recommendations.append(
@@ -438,12 +459,14 @@ class ISO27001Reporter:
             )
 
         # Always include best practices
-        recommendations.extend([
-            "Regularly review and update access control policies",
-            "Conduct periodic security audits and penetration testing",
-            "Maintain up-to-date documentation of security procedures",
-            "Ensure all staff receive security awareness training",
-        ])
+        recommendations.extend(
+            [
+                "Regularly review and update access control policies",
+                "Conduct periodic security audits and penetration testing",
+                "Maintain up-to-date documentation of security procedures",
+                "Ensure all staff receive security awareness training",
+            ]
+        )
 
         return recommendations
 
@@ -474,14 +497,14 @@ class ISO27001Reporter:
         </head>
         <body>
             <h1>ISO27001 Compliance Report</h1>
-            <p>Generated: {report['metadata']['generated_at']}</p>
-            <p>Period: {report['metadata']['reporting_period']['start']} to
-               {report['metadata']['reporting_period']['end']}</p>
+            <p>Generated: {report["metadata"]["generated_at"]}</p>
+            <p>Period: {report["metadata"]["reporting_period"]["start"]} to
+               {report["metadata"]["reporting_period"]["end"]}</p>
 
             <h2>Executive Summary</h2>
-            <div class="metric">Compliance Status: {report['executive_summary']['compliance_status']}</div>
-            <div class="metric">Total Events: {report['executive_summary']['total_events_logged']}</div>
-            <div class="metric">Risk Level: {report['executive_summary']['risk_level']}</div>
+            <div class="metric">Compliance Status: {report["executive_summary"]["compliance_status"]}</div>
+            <div class="metric">Total Events: {report["executive_summary"]["total_events_logged"]}</div>
+            <div class="metric">Risk Level: {report["executive_summary"]["risk_level"]}</div>
 
             <h2>Control Implementation</h2>
             <table>
@@ -492,13 +515,13 @@ class ISO27001Reporter:
                 </tr>
         """
 
-        for control_id, control in report['control_mappings'].items():
+        for control_id, control in report["control_mappings"].items():
             html += f"""
                 <tr>
                     <td>{control_id}</td>
-                    <td>{control['title']}</td>
-                    <td class="status-{'valid' if control['status'] == 'IMPLEMENTED' else 'invalid'}">
-                        {control['status']}
+                    <td>{control["title"]}</td>
+                    <td class="status-{"valid" if control["status"] == "IMPLEMENTED" else "invalid"}">
+                        {control["status"]}
                     </td>
                 </tr>
             """
