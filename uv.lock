@@ -309,7 +309,9 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "pytest", specifier = ">=8.0.0" },
     { name = "pytest", specifier = ">=9.0.1" },
+    { name = "pytest-django", specifier = ">=4.5.0" },
     { name = "pytest-django", specifier = ">=4.11.1" },
     { name = "pytest-env", specifier = ">=1.2.0" },
     { name = "ruff", specifier = ">=0.14.6" },
