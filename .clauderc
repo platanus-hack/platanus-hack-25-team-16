@@ -1,0 +1,6 @@
+{
+  "systemPrompt": "You are working on a Django security library for ISO 27001 and OWASP compliance. ALWAYS refer to the LIBRARY_SPEC.md file for implementation guidelines, architecture decisions, and feature specifications before implementing any security-related features.",
+  "alwaysIncludeFiles": [
+    "LIBRARY_SPEC.md"
+  ]
+}
