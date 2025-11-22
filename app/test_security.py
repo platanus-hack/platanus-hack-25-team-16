@@ -23,7 +23,7 @@ def health_check(request):
 
 @rate_limit("5/m", key="ip")
 @require_http_methods(["GET"])
-def test_rate_limit(request):
+def rate_limit_endpoint(request):
     """Test rate limiting - allows only 5 requests per minute."""
     return JsonResponse(
         {
@@ -41,7 +41,7 @@ def test_rate_limit(request):
 )
 @csrf_exempt  # Only for testing
 @require_http_methods(["POST"])
-def test_validation(request):
+def validation_endpoint(request):
     """Test input validation."""
     return JsonResponse(
         {
@@ -54,7 +54,7 @@ def test_validation(request):
 
 @secure_response(exclude_fields=["password", "secret"])
 @require_http_methods(["GET"])
-def test_secure_response(request):
+def secure_response_endpoint(request):
     """Test response sanitization."""
     # This simulates getting user data
     data = {
@@ -69,7 +69,7 @@ def test_secure_response(request):
 
 @audit_log("test_security_check", log_request=True)
 @require_http_methods(["GET"])
-def test_audit_log(request):
+def audit_log_endpoint(request):
     """Test audit logging."""
     return JsonResponse(
         {"status": "success", "message": "This request has been logged for audit"}
@@ -78,14 +78,14 @@ def test_audit_log(request):
 
 # Test suspicious patterns (this will be blocked)
 @require_http_methods(["GET"])
-def test_sql_injection(request):
+def sql_injection_endpoint(request):
     """This endpoint helps test SQL injection detection."""
     query = request.GET.get("query", "")
     return JsonResponse({"status": "success", "message": f"Your query: {query}"})
 
 
 @require_http_methods(["GET"])
-def test_headers(request):
+def headers_endpoint(request):
     """Check security headers."""
     headers = {
         "Content-Security-Policy": "Present"

@@ -53,6 +53,8 @@ INSTALLED_APPS: list[str] = [
     # Our custom security features
     "auth_security",
     "auditory",
+    "app.security",
+    "app.security.storage",
 ]
 
 MIDDLEWARE: list[str] = [
@@ -299,6 +301,76 @@ DJANGO_SEC = {
             "name",
             "xpendit",
         ],
+    },
+    # Encrypted File Field Configuration
+    "FILE_ENCRYPTION_KEY": config(
+        "FILE_ENCRYPTION_KEY",
+        default=None,  # Will generate one in development if not set
+    ),
+    "ENCRYPTED_FILES": {
+        "ENABLED": True,
+        "MAX_SIZE": 10 * 1024 * 1024,  # 10MB default
+        "ALLOWED_EXTENSIONS": [
+            ".pdf",
+            ".docx",
+            ".xlsx",
+            ".jpg",
+            ".png",
+            ".txt",
+            ".csv",
+        ],
+        "VALIDATE_MIME": True,
+        # Configurable dangerous extensions
+        "DANGEROUS_EXTENSIONS": [
+            # Executables
+            ".exe",
+            ".dll",
+            ".so",
+            ".dylib",
+            ".app",
+            # Scripts
+            ".bat",
+            ".cmd",
+            ".sh",
+            ".ps1",
+            ".vbs",
+            ".js",
+            ".jse",
+            ".wsf",
+            ".wsh",
+            # System files
+            ".com",
+            ".scr",
+            ".msi",
+            ".jar",
+            ".deb",
+            ".rpm",
+            ".dmg",
+            # Code files that could be executed
+            ".py",
+            ".php",
+            ".asp",
+            ".aspx",
+            ".jsp",
+            ".cgi",
+            # Office macros
+            ".xlsm",
+            ".docm",
+            ".pptm",
+            # Other potentially dangerous
+            ".lnk",
+            ".inf",
+            ".reg",
+            ".gadget",
+        ],
+        # Signed URLs Configuration
+        "SIGNED_URLS": {
+            "ENABLED": True,
+            "DEFAULT_EXPIRY": 3600,  # 1 hour
+            "BIND_TO_IP": False,  # Don't bind to IP by default
+            "INCLUDE_PERMISSIONS": True,
+            "DOWNLOAD_ENDPOINT": "/api/secure-download/",
+        },
     },
 }
 

@@ -14,11 +14,41 @@ dependencies = [
     "python-decouple>=3.8",
     "redis>=5.0.0",
     "bleach>=6.2.0",
+    "cryptography>=46.0.3",
+    "python-magic>=0.4.27",
+    "itsdangerous>=2.2.0",
 ]
 
 [dependency-groups]
 dev = [
     "pytest>=9.0.1",
     "pytest-django>=4.11.1",
+    "pytest-env>=1.2.0",
     "ruff>=0.14.6",
 ]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "app.settings"
+django_find_project = false
+pythonpath = ["."]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = [
+    "--verbose",
+    "--strict-markers",
+    "--tb=short",
+    "--disable-warnings",
+]
+markers = [
+    "django_db: mark test as requiring database access",
+    "slow: mark test as slow running",
+]
+testpaths = "app/security/tests"
+
+[tool.pytest_env]
+HOME = "~/tmp"
+RUN_ENV = "test"
+SECRET_KEY = "test-secret-key-for-pytest-please-change-in-production"
+DEBUG = "True"
+ALLOWED_HOSTS = "localhost,127.0.0.1,testserver"
