@@ -270,6 +270,11 @@ class PasswordReuseValidator:
         if user is None or self.prevent_reuse <= 0:
             return
 
+        # Skip validation if user is not saved (e.g., during createsuperuser)
+        # A user without pk cannot have password history
+        if not hasattr(user, "pk") or user.pk is None:
+            return
+
         try:
             from django.contrib.auth.hashers import check_password
 

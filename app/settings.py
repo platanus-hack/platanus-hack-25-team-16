@@ -22,7 +22,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # TODO: Eliminar estos secretos de acá, sería un blooper tenerlos en las presentación
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config("SECRET_KEY")
+SECRET_KEY = config(
+    "SECRET_KEY",
+    default="django-insecure-dev-key-only-for-development-not-for-production-use-this-key-is-not-secure"
+)
 DEBUG = config("DEBUG", default=False, cast=bool)
 
 ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1", cast=Csv())
@@ -49,10 +52,13 @@ INSTALLED_APPS: list[str] = [
     # TODO: Algo pro sería añadirle OTP de whatsapp a la librería
     # Our custom security features
     "auth_security",
+    "auditory",
 ]
 
 MIDDLEWARE: list[str] = [
     "django.middleware.security.SecurityMiddleware",
+    "auditory.http.HTTPProtectionMiddleware",
+    "auditory.audit.middleware.AuditContextMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -60,6 +66,8 @@ MIDDLEWARE: list[str] = [
     "axes.middleware.AxesMiddleware",
     "auth_security.middleware.SessionSecurityMiddleware",
     "django_otp.middleware.OTPMiddleware",  # django-otp MFA support
+    "auditory.audit.user_context.UserContextEnricher",
+    "auditory.api.middleware.APIRequestLoggingMiddleware",  # NEW: API request logging
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -305,3 +313,60 @@ else:
 
 # The apply_secure_defaults function will automatically add our security middleware
 # to the MIDDLEWARE list, so no manual modification needed there
+
+SECURITY_CONFIG = {
+    "COMPLIANCE_STANDARD": "ISO27001",
+    "AUDIT_LOG": {
+        "ENABLED": True,
+        "DECOUPLED_MODE": True,
+        "HASH_CHAINING": True,
+        "STORAGE_BACKEND": "auditory.audit.backends.tamper_evident.TamperEvidentPostgres",
+        "PII_MASKING": "auditory.audit.policies.StrictMasking",
+        "MODELS": [
+            # WHITELIST MODE (opcional): Si esta lista NO está vacía, solo se auditarán estos modelos
+            # Deja esta lista vacía [] para auditar TODOS los modelos automáticamente
+            # Ejemplos:
+            # "auth.User",           # Usuarios de Django
+            # "auth.Group",          # Grupos de Django
+            # "app.Modelo",          # Modelos de tu aplicación
+        ],
+        "MODELS_BLACKLIST": [
+            # BLACKLIST: Modelos que NUNCA se auditarán (solo aplica cuando MODELS está vacío)
+            # Los modelos de Django internos suelen ser seguros para excluir
+            "contenttypes.contenttype",      # Tipos de contenido de Django
+            "auth.permission",               # Permisos de Django (raramente cambian)
+            "sessions.session",              # Sesiones (muy volátiles, poco valor de auditoría)
+            "admin.logentry",                # Ya es un log de auditoría de Django
+            "auditory.apirequestlog",        # API request logs (no auditar auditorías)
+            # Agrega aquí otros modelos que no necesites auditar
+        ],
+        "RETENTION_DAYS": 90,
+        "MAX_BODY_LENGTH": 8192,
+    },
+    "HTTP_SECURITY": {
+        "ENABLED": True,
+        "HSTS_SECONDS": 31536000,
+        "CSP_ENFORCE": True,
+        "X_FRAME_OPTIONS": "DENY",
+    },
+    # NEW: API Request Logging Configuration
+    "API_REQUEST_LOG": {
+        "ENABLED": True,
+        "LOG_SUCCESSFUL_REQUESTS": True,  # Log 2xx responses
+        "LOG_CLIENT_ERRORS": True,        # Log 4xx responses
+        "LOG_SERVER_ERRORS": True,        # Log 5xx responses
+        "EXCLUDE_PATHS": [
+            "/admin/jsi18n/",       # Django admin i18n
+            "/static/",             # Static files
+            "/media/",              # Media files
+            "/health/",             # Health check endpoint
+            "/metrics/",            # Metrics endpoint
+        ],
+        "SAMPLING_RATE": 1.0,      # 1.0 = 100%, 0.1 = 10%
+        "COLLECT_REQUEST_BODY": True,
+        "COLLECT_RESPONSE_BODY_ON_ERROR": True,
+        "MAX_BODY_SIZE": 10240,    # 10KB
+        "ANONYMIZE_IPS": False,    # Set to True for GDPR compliance
+        "RETENTION_DAYS": 180,     # 6 months for compliance
+    },
+}
