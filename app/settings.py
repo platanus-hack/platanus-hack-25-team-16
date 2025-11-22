@@ -50,10 +50,12 @@ INSTALLED_APPS: list[str] = [
     "django_otp",  # OTP framework
     "django_otp.plugins.otp_totp",  # TOTP (Google Authenticator, etc.)
     "django_otp.plugins.otp_static",  # Backup codes
+    "django_crypto_fields",  # Battle-tested encryption library
     # TODO: Algo pro sería añadirle OTP de whatsapp a la librería
     # Our custom security features
     "auth_security",
     "input_validation",  # Input validation and sanitization
+    "data_protection",  # Cryptographic controls and encrypted fields (ISO27001 A.10.1)
     "auditory",
     "app.security",
     "app.security.storage",
@@ -220,6 +222,9 @@ AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]  # Lock by username and I
 AXES_IPWARE_PROXY_COUNT = 1  # Number of proxies (adjust for your setup)
 AXES_VERBOSE = True  # Enable verbose logging
 AXES_ENABLE_ADMIN = True  # Enable axes admin interface
+
+
+
 # ============================================================================
 # SECURITY CONFIGURATION
 # ============================================================================
@@ -387,6 +392,9 @@ if DEBUG:
 else:
     apply_secure_defaults(globals(), preset=DJANGO_SEC["RISK_PROFILE"])
 
+
+
+
 # The apply_secure_defaults function will automatically add our security middleware
 # to the MIDDLEWARE list, so no manual modification needed there
 
@@ -446,3 +454,43 @@ SECURITY_CONFIG = {
         "RETENTION_DAYS": 180,  # 6 months for compliance
     },
 }
+
+
+# =============================================================================
+# DATA PROTECTION CONFIGURATION (ISO27001 A.10.1 - Cryptographic Controls)
+# =============================================================================
+
+# Encryption Configuration
+# Note: By default, encryption keys are derived from SECRET_KEY using PBKDF2
+# For production, consider using dedicated encryption keys stored securely
+
+# Optional: Provide a dedicated Fernet key (base64-encoded, 32 bytes)
+# Generate with: from cryptography.fernet import Fernet; print(Fernet.generate_key())
+# DATA_PROTECTION_KEY = None  # Uses SECRET_KEY if not set
+
+# Optional: Custom salt for searchable index hashing
+# DATA_PROTECTION_SEARCH_SALT = None  # Uses SECRET_KEY if not set
+
+# Searchable Encryption Configuration
+DATA_PROTECTION: dict[str, object] = {
+    # N-gram configuration for searchable encryption
+    'NGRAM_SIZE': 3,  # Size of n-grams for indexing (3 = trigrams)
+    'MIN_SEARCH_LENGTH': 2,  # Minimum search term length
+
+    # Key rotation support (future)
+    'KEY_VERSION': 'v1',  # Current key version
+
+    # Compliance
+    'ENCRYPTION_ALGORITHM': 'Fernet (AES-128 CBC)',  # ISO27001 compliant
+    'KEY_DERIVATION': 'PBKDF2-HMAC-SHA256',  # NIST recommended
+}
+
+# =============================================================================
+# DJANGO-CRYPTO-FIELDS CONFIGURATION
+# =============================================================================
+
+# Key path for django-crypto-fields
+DJANGO_CRYPTO_FIELDS_KEY_PATH = BASE_DIR / 'crypto_keys'
+
+# Auto-create keys on first run
+AUTO_CREATE_KEYS = True
