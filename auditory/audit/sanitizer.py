@@ -4,7 +4,9 @@ from typing import Any, Tuple
 from .policies import BaseMaskingPolicy
 
 
-def sanitize_body(raw_body: bytes, policy: BaseMaskingPolicy | None, max_length: int | None = None) -> Tuple[bytes, Any]:
+def sanitize_body(
+    raw_body: bytes, policy: BaseMaskingPolicy | None, max_length: int | None = None
+) -> Tuple[bytes, Any]:
     """
     Devuelve cuerpo saneado (bytes) y representación parseada (dict/list/str).
     """
@@ -26,7 +28,9 @@ def sanitize_body(raw_body: bytes, policy: BaseMaskingPolicy | None, max_length:
         masked = parsed
 
     try:
-        sanitized_bytes = json.dumps(masked, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        sanitized_bytes = json.dumps(
+            masked, separators=(",", ":"), ensure_ascii=False
+        ).encode("utf-8")
     except Exception:
         sanitized_bytes = body
 

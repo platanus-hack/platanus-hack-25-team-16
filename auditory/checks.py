@@ -13,7 +13,9 @@ def middleware_order_check(app_configs, **kwargs):
     middleware = list(getattr(settings, "MIDDLEWARE", []))
 
     if AUDIT_MIDDLEWARE in middleware and USER_CONTEXT_MIDDLEWARE in middleware:
-        if middleware.index(AUDIT_MIDDLEWARE) > middleware.index(USER_CONTEXT_MIDDLEWARE):
+        if middleware.index(AUDIT_MIDDLEWARE) > middleware.index(
+            USER_CONTEXT_MIDDLEWARE
+        ):
             errors.append(
                 Error(
                     "AuditContextMiddleware debe ir antes de UserContextEnricher.",
@@ -23,7 +25,9 @@ def middleware_order_check(app_configs, **kwargs):
 
     if AUDIT_MIDDLEWARE in middleware:
         try:
-            auth_index = middleware.index("django.contrib.auth.middleware.AuthenticationMiddleware")
+            auth_index = middleware.index(
+                "django.contrib.auth.middleware.AuthenticationMiddleware"
+            )
             audit_index = middleware.index(AUDIT_MIDDLEWARE)
             if audit_index > auth_index:
                 errors.append(
@@ -42,7 +46,9 @@ def middleware_order_check(app_configs, **kwargs):
 
     if HTTP_MIDDLEWARE in middleware:
         try:
-            security_idx = middleware.index("django.middleware.security.SecurityMiddleware")
+            security_idx = middleware.index(
+                "django.middleware.security.SecurityMiddleware"
+            )
             http_idx = middleware.index(HTTP_MIDDLEWARE)
             if http_idx < security_idx:
                 errors.append(

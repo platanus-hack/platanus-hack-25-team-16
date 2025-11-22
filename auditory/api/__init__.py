@@ -2,4 +2,4 @@
 
 from .models import APIRequestLog
 
-__all__ = ['APIRequestLog']
+__all__ = ["APIRequestLog"]

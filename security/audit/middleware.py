@@ -41,7 +41,9 @@ class AuditContextMiddleware(MiddlewareMixin):
             raw_body = b""
 
         policy = security_state.get_policy()
-        sanitized_body, parsed_body = sanitize_body(raw_body, policy, max_length=max_body)
+        sanitized_body, parsed_body = sanitize_body(
+            raw_body, policy, max_length=max_body
+        )
         request._body = raw_body
         request._stream = BytesIO(raw_body)
 

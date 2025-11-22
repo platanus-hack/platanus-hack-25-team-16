@@ -30,6 +30,8 @@ class HTTPProtectionMiddleware:
         if xfo:
             response.headers["X-Frame-Options"] = xfo
 
-        response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+        response.headers.setdefault(
+            "Referrer-Policy", "strict-origin-when-cross-origin"
+        )
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
         return response

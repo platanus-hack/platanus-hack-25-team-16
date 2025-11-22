@@ -14,4 +14,6 @@ class BaseAuditBackend(Protocol):
 def canonical_json(payload: Any) -> str:
     import json
 
-    return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    )

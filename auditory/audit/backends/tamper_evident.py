@@ -22,10 +22,14 @@ class TamperEvidentPostgres:
         key_env = cfg.get("AUDIT_LOG", {}).get("HASH_KEY_ENV") or "AUDIT_HASH_KEY"
         key = os.environ.get(key_env) or getattr(settings, "SECRET_KEY", "")
         if not key:
-            raise ImproperlyConfigured("No se encontró clave HMAC para la cadena de hash de auditoría.")
+            raise ImproperlyConfigured(
+                "No se encontró clave HMAC para la cadena de hash de auditoría."
+            )
         self.key = key.encode("utf-8")
 
-    def _compute_hash(self, prev_hash: str, canonical_payload: str, timestamp: str) -> str:
+    def _compute_hash(
+        self, prev_hash: str, canonical_payload: str, timestamp: str
+    ) -> str:
         content = f"{prev_hash}|{canonical_payload}|{timestamp}".encode("utf-8")
         return hmac.new(self.key, content, hashlib.sha256).hexdigest()
 
@@ -60,11 +64,12 @@ class TamperEvidentPostgres:
         # Normalize snapshot and metadata through JSON serialization/deserialization
         # to ensure they match what will be read back from JSONField
         import json
+
         snapshot = json.loads(json.dumps(snapshot))
         metadata = json.loads(json.dumps(metadata))
 
         # Calcular canonical payload con los datos exactos que se almacenarán
-        canonical_payload = self._canonical_payload(
+        canonical_payload = self._canonical_payload(  # noqa: F841
             {
                 "app_label": app_label,
                 "model": model,
@@ -108,7 +113,7 @@ class TamperEvidentPostgres:
             timestamp=timestamp,
         )
         entry.save()
-        
+
         # Recalcular hash con el timestamp exacto que se guardó en la DB
         entry.refresh_from_db()
         timestamp_str_from_db = entry.timestamp.isoformat()
@@ -123,7 +128,9 @@ class TamperEvidentPostgres:
             },
             timestamp_str_from_db,
         )
-        hash_current_final = self._compute_hash(hash_prev, canonical_payload_final, timestamp_str_from_db)
+        hash_current_final = self._compute_hash(
+            hash_prev, canonical_payload_final, timestamp_str_from_db
+        )
         entry.hash_current = hash_current_final
         entry.save(update_fields=["hash_current"])
 
@@ -145,7 +152,9 @@ class TamperEvidentPostgres:
                 },
                 entry.timestamp.isoformat(),
             )
-            expected = self._compute_hash(expected_prev, canonical, entry.timestamp.isoformat())
+            expected = self._compute_hash(
+                expected_prev, canonical, entry.timestamp.isoformat()
+            )
             if entry.hash_current != expected:
                 mismatches.append(entry.id)
             expected_prev = entry.hash_current
@@ -179,16 +188,18 @@ class TamperEvidentPostgres:
         validation_errors = json.loads(json.dumps(event.get("validation_errors", [])))
 
         # Prepare canonical payload for API log
-        canonical_payload = canonical_json({
-            "correlation_id": event.get("correlation_id"),
-            "endpoint": event.get("endpoint"),
-            "http_method": event.get("http_method"),
-            "request_path": event.get("request_path"),
-            "response_status": event.get("response_status"),
-            "user_id": event.get("user_id"),
-            "ip_address": event.get("ip_address"),
-            "timestamp": timestamp_str,
-        })
+        canonical_payload = canonical_json(
+            {
+                "correlation_id": event.get("correlation_id"),
+                "endpoint": event.get("endpoint"),
+                "http_method": event.get("http_method"),
+                "request_path": event.get("request_path"),
+                "response_status": event.get("response_status"),
+                "user_id": event.get("user_id"),
+                "ip_address": event.get("ip_address"),
+                "timestamp": timestamp_str,
+            }
+        )
 
         # Get previous hash for chain integrity
         hash_prev = ""
@@ -201,7 +212,9 @@ class TamperEvidentPostgres:
                 .first()
             )
             hash_prev = latest.hash_current if latest else "0" * 64
-            hash_current = self._compute_hash(hash_prev, canonical_payload, timestamp_str)
+            hash_current = self._compute_hash(
+                hash_prev, canonical_payload, timestamp_str
+            )
 
         # Create API log entry with all data
         entry = APIRequestLog(
@@ -257,17 +270,21 @@ class TamperEvidentPostgres:
         qs = APIRequestLog.objects.order_by("timestamp").iterator()
         for entry in qs:
             if self.hash_chaining:
-                canonical = canonical_json({
-                    "correlation_id": entry.correlation_id,
-                    "endpoint": entry.endpoint,
-                    "http_method": entry.http_method,
-                    "request_path": entry.request_path,
-                    "response_status": entry.response_status,
-                    "user_id": entry.user_id,
-                    "ip_address": entry.ip_address,
-                    "timestamp": entry.timestamp.isoformat(),
-                })
-                expected = self._compute_hash(expected_prev, canonical, entry.timestamp.isoformat())
+                canonical = canonical_json(
+                    {
+                        "correlation_id": entry.correlation_id,
+                        "endpoint": entry.endpoint,
+                        "http_method": entry.http_method,
+                        "request_path": entry.request_path,
+                        "response_status": entry.response_status,
+                        "user_id": entry.user_id,
+                        "ip_address": entry.ip_address,
+                        "timestamp": entry.timestamp.isoformat(),
+                    }
+                )
+                expected = self._compute_hash(
+                    expected_prev, canonical, entry.timestamp.isoformat()
+                )
                 if entry.hash_current != expected:
                     mismatches.append(str(entry.event_id))
                 expected_prev = entry.hash_current

@@ -59,15 +59,21 @@ def _validate_runtime(cfg: Dict[str, Any]) -> None:
 
     if not debug:
         if allowed_hosts in ([], ["*"], ["*.*"], "*"):
-            raise ImproperlyConfigured("ALLOWED_HOSTS no puede estar vacío ni ser comodín en producción.")
+            raise ImproperlyConfigured(
+                "ALLOWED_HOSTS no puede estar vacío ni ser comodín en producción."
+            )
 
         if _entropy(secret_key) < 3.5:
-            raise ImproperlyConfigured("SECRET_KEY no tiene entropía suficiente para producción.")
+            raise ImproperlyConfigured(
+                "SECRET_KEY no tiene entropía suficiente para producción."
+            )
     else:
         if allowed_hosts in ([], ["*"], ["*.*"], "*"):
             logger.warning("ALLOWED_HOSTS está permisivo; ajusta antes de producción.")
         if _entropy(secret_key) < 3.5:
-            logger.warning("SECRET_KEY tiene entropía baja; genera una clave fuerte para producción.")
+            logger.warning(
+                "SECRET_KEY tiene entropía baja; genera una clave fuerte para producción."
+            )
 
 
 class SecurityConfig(AppConfig):
@@ -89,4 +95,6 @@ class SecurityConfig(AppConfig):
 
         register_signals(cfg, backend, policy)
 
-        logger.info("Security library inicializada con backend %s", backend.__class__.__name__)
+        logger.info(
+            "Security library inicializada con backend %s", backend.__class__.__name__
+        )

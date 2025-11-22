@@ -17,6 +17,7 @@ dependencies = [
     "cryptography>=46.0.3",
     "python-magic>=0.4.27",
     "itsdangerous>=2.2.0",
+    "whitenoise>=6.11.0",
 ]
 
 [dependency-groups]

@@ -22,10 +22,14 @@ class TamperEvidentPostgres:
         key_env = cfg.get("AUDIT_LOG", {}).get("HASH_KEY_ENV") or "AUDIT_HASH_KEY"
         key = os.environ.get(key_env) or getattr(settings, "SECRET_KEY", "")
         if not key:
-            raise ImproperlyConfigured("No se encontró clave HMAC para la cadena de hash de auditoría.")
+            raise ImproperlyConfigured(
+                "No se encontró clave HMAC para la cadena de hash de auditoría."
+            )
         self.key = key.encode("utf-8")
 
-    def _compute_hash(self, prev_hash: str, canonical_payload: str, timestamp: str) -> str:
+    def _compute_hash(
+        self, prev_hash: str, canonical_payload: str, timestamp: str
+    ) -> str:
         content = f"{prev_hash}|{canonical_payload}|{timestamp}".encode("utf-8")
         return hmac.new(self.key, content, hashlib.sha256).hexdigest()
 
@@ -61,7 +65,9 @@ class TamperEvidentPostgres:
                 .first()
             )
             hash_prev = latest.hash_current if latest else ""
-            hash_current = self._compute_hash(hash_prev, canonical_payload, timestamp_str)
+            hash_current = self._compute_hash(
+                hash_prev, canonical_payload, timestamp_str
+            )
 
         entry = AuditLogEntry(
             app_label=event.get("app_label"),
@@ -102,7 +108,9 @@ class TamperEvidentPostgres:
                 },
                 entry.timestamp.isoformat(),
             )
-            expected = self._compute_hash(expected_prev, canonical, entry.timestamp.isoformat())
+            expected = self._compute_hash(
+                expected_prev, canonical, entry.timestamp.isoformat()
+            )
             if entry.hash_current != expected:
                 mismatches.append(entry.id)
             expected_prev = entry.hash_current

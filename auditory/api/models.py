@@ -21,26 +21,26 @@ class APIRequestLog(models.Model):
     correlation_id = models.CharField(
         max_length=64,
         db_index=True,
-        help_text="Unique ID for request tracing across services"
+        help_text="Unique ID for request tracing across services",
     )
 
     # === Request Details ===
     endpoint = models.CharField(
         max_length=255,
         db_index=True,
-        help_text="Normalized endpoint path (e.g., /api/v1/expenses/{id}/)"
+        help_text="Normalized endpoint path (e.g., /api/v1/expenses/{id}/)",
     )
     http_method = models.CharField(
         max_length=10,
         choices=[
-            ('GET', 'GET'),
-            ('POST', 'POST'),
-            ('PUT', 'PUT'),
-            ('PATCH', 'PATCH'),
-            ('DELETE', 'DELETE'),
-            ('HEAD', 'HEAD'),
-            ('OPTIONS', 'OPTIONS'),
-        ]
+            ("GET", "GET"),
+            ("POST", "POST"),
+            ("PUT", "PUT"),
+            ("PATCH", "PATCH"),
+            ("DELETE", "DELETE"),
+            ("HEAD", "HEAD"),
+            ("OPTIONS", "OPTIONS"),
+        ],
     )
     request_path = models.TextField(help_text="Full path including query parameters")
 
@@ -55,13 +55,11 @@ class APIRequestLog(models.Model):
         max_length=64,
         null=True,
         blank=True,
-        help_text="SHA256 hash of request body for integrity"
+        help_text="SHA256 hash of request body for integrity",
     )
     request_size = models.IntegerField(default=0, help_text="Request size in bytes")
     query_params = models.JSONField(
-        default=dict,
-        blank=True,
-        help_text="Sanitized query parameters"
+        default=dict, blank=True, help_text="Sanitized query parameters"
     )
 
     # === Response Details ===
@@ -71,13 +69,11 @@ class APIRequestLog(models.Model):
         max_length=64,
         null=True,
         blank=True,
-        help_text="SHA256 hash of response body (errors only)"
+        help_text="SHA256 hash of response body (errors only)",
     )
     response_size = models.IntegerField(default=0, help_text="Response size in bytes")
     response_headers = models.JSONField(
-        default=dict,
-        blank=True,
-        help_text="Selected response headers"
+        default=dict, blank=True, help_text="Selected response headers"
     )
 
     # === User Context ===
@@ -93,18 +89,17 @@ class APIRequestLog(models.Model):
         null=True,
         blank=True,
         choices=[
-            ('session', 'Session'),
-            ('jwt', 'JWT Token'),
-            ('apikey', 'API Key'),
-            ('oauth2', 'OAuth2'),
-            ('basic', 'Basic Auth'),
-            (None, 'Anonymous'),
-        ]
+            ("session", "Session"),
+            ("jwt", "JWT Token"),
+            ("apikey", "API Key"),
+            ("oauth2", "OAuth2"),
+            ("basic", "Basic Auth"),
+            (None, "Anonymous"),
+        ],
     )
     auth_success = models.BooleanField(default=True)
     permission_checks = models.JSONField(
-        default=list,
-        help_text="List of permissions verified during request"
+        default=list, help_text="List of permissions verified during request"
     )
     throttled = models.BooleanField(default=False)
     rate_limit_remaining = models.IntegerField(null=True, blank=True)
@@ -116,64 +111,59 @@ class APIRequestLog(models.Model):
         max_length=64,
         null=True,
         blank=True,
-        help_text="Hash of traceback for error grouping"
+        help_text="Hash of traceback for error grouping",
     )
 
     # === API Metadata ===
     api_version = models.CharField(
-        max_length=10,
-        null=True,
-        blank=True,
-        help_text="API version (e.g., v1, v2)"
+        max_length=10, null=True, blank=True, help_text="API version (e.g., v1, v2)"
     )
     api_type = models.CharField(
         max_length=20,
-        default='rest',
+        default="rest",
         choices=[
-            ('rest', 'REST API'),
-            ('graphql', 'GraphQL'),
-            ('websocket', 'WebSocket'),
-            ('rpc', 'RPC'),
-        ]
+            ("rest", "REST API"),
+            ("graphql", "GraphQL"),
+            ("websocket", "WebSocket"),
+            ("rpc", "RPC"),
+        ],
     )
     resource_type = models.CharField(
         max_length=50,
         null=True,
         blank=True,
-        help_text="Resource being accessed (e.g., expense, user)"
+        help_text="Resource being accessed (e.g., expense, user)",
     )
     resource_id = models.CharField(
-        max_length=64,
-        null=True,
-        blank=True,
-        help_text="ID of specific resource"
+        max_length=64, null=True, blank=True, help_text="ID of specific resource"
     )
 
     # === Cryptographic Integrity (hash chain) ===
     hash_prev = models.CharField(
-        max_length=128,
-        null=True,
-        blank=True,
-        help_text="Hash of previous log entry"
+        max_length=128, null=True, blank=True, help_text="Hash of previous log entry"
     )
     hash_current = models.CharField(
         max_length=128,
         db_index=True,
-        help_text="Hash of current entry for chain integrity"
+        help_text="Hash of current entry for chain integrity",
     )
 
     class Meta:
-        db_table = 'auditory_api_request_log'
-        ordering = ['-timestamp']
+        db_table = "auditory_api_request_log"
+        ordering = ["-timestamp"]
         indexes = [
-            models.Index(fields=['timestamp', 'endpoint'], name='idx_api_log_time_endpoint'),
-            models.Index(fields=['user_id', 'timestamp'], name='idx_api_log_user_time'),
-            models.Index(fields=['response_status', 'timestamp'], name='idx_api_log_status_time'),
-            models.Index(fields=['correlation_id'], name='idx_api_log_correlation'),
-            models.Index(fields=['hash_current'], name='idx_api_log_hash'),
+            models.Index(
+                fields=["timestamp", "endpoint"], name="idx_api_log_time_endpoint"
+            ),
+            models.Index(fields=["user_id", "timestamp"], name="idx_api_log_user_time"),
+            models.Index(
+                fields=["response_status", "timestamp"], name="idx_api_log_status_time"
+            ),
+            models.Index(fields=["correlation_id"], name="idx_api_log_correlation"),
+            models.Index(fields=["hash_current"], name="idx_api_log_hash"),
         ]
-        verbose_name = 'API Request Log'
-        verbose_name_plural = 'API Request Logs'
+        verbose_name = "API Request Log"
+        verbose_name_plural = "API Request Logs"
 
     def __str__(self):
         return f"{self.timestamp} - {self.http_method} {self.endpoint} - {self.response_status}"
@@ -197,10 +187,10 @@ class APIRequestLog(models.Model):
     def response_category(self):
         """Categorize response status."""
         if self.is_success:
-            return 'success'
+            return "success"
         elif self.is_client_error:
-            return 'client_error'
+            return "client_error"
         elif self.is_server_error:
-            return 'server_error'
+            return "server_error"
         else:
-            return 'other'
+            return "other"

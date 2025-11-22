@@ -18,5 +18,8 @@ class UserContextEnricher(MiddlewareMixin):
 
         user = getattr(request, "user", None)
         if user and user.is_authenticated:
-            update_context(actor=str(user.pk), actor_label=getattr(user, "get_username", lambda: "")())
+            update_context(
+                actor=str(user.pk),
+                actor_label=getattr(user, "get_username", lambda: "")(),
+            )
         return None
