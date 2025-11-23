@@ -5,7 +5,8 @@ FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    DJANGO_CRYPTO_FIELDS_KEY_PATH=/var/lib/crypto_keys
 
 # Install system dependencies
 RUN apt-get update && \
@@ -33,7 +34,6 @@ COPY . .
 RUN mkdir -p /app/staticfiles /var/lib/crypto_keys && \
     chmod 700 /var/lib/crypto_keys
 
-# The environment variable DJANGO_CRYPTO_FIELDS_KEY_PATH should be set at runtime using Docker's -e flag or a secrets manager.
 
 # Collect static files (only once, during build)
 RUN python manage.py collectstatic --noinput
