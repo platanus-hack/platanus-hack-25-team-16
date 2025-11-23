@@ -530,3 +530,5 @@ if not DJANGO_CRYPTO_FIELDS_KEY_PATH.exists():
 
 # Auto-create keys on first run
 AUTO_CREATE_KEYS = True
+
+DJANGO_REVISION_IGNORE_WORKING_DIR = True
