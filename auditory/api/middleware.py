@@ -341,11 +341,32 @@ class APIRequestLoggingMiddleware(MiddlewareMixin):
 
         return resource_type, resource_id
 
+    def _ensure_json_serializable(self, data: Any) -> Any:
+        """
+        Recursively convert all non-JSON-serializable types to strings.
+        """
+        if isinstance(data, dict):
+            return {k: self._ensure_json_serializable(v) for k, v in data.items()}
+        elif isinstance(data, (list, tuple)):
+            return [self._ensure_json_serializable(item) for item in data]
+        elif isinstance(data, (str, int, float, bool)) or data is None:
+            return data
+        else:
+            # Convert non-serializable types (like Django expressions) to strings
+            try:
+                json.dumps(data)
+                return data
+            except (TypeError, ValueError):
+                return str(data)
+
     def _save_log_entry(self, log_data: Dict[str, Any], config: Dict[str, Any]) -> None:
         """
         Save the log entry with cryptographic integrity.
         """
         try:
+            # Ensure data is JSON serializable before saving
+            log_data = self._ensure_json_serializable(log_data)
+
             # Get the backend and save
             backend = security_state.get_backend()
 

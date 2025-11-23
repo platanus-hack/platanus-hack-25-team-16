@@ -1,11 +1,17 @@
-from django.contrib import admin
-from django.utils.html import format_html
+import hashlib
+import hmac
 import json
-
-from .audit.models import AuditLogEntry
-from .api.models import APIRequestLog
-from django.utils import timezone
+import os
 from datetime import timedelta
+
+from django.conf import settings
+from django.contrib import admin
+from django.utils import timezone
+from django.utils.html import format_html
+
+from .api.models import APIRequestLog
+from .audit.backends.base import canonical_json
+from .audit.models import AuditLogEntry
 
 
 @admin.register(AuditLogEntry)
@@ -27,9 +33,10 @@ class AuditLogEntryAdmin(admin.ModelAdmin):
         "hash_status",
     ]
     list_filter = [
-        "action",
         "app_label",
         "model",
+        "action",
+        "actor",
         "timestamp",
         "http_method",
     ]
@@ -178,15 +185,77 @@ class AuditLogEntryAdmin(admin.ModelAdmin):
     correlation_id_short.short_description = "Correlation ID"
 
     def hash_status(self, obj):
-        """Display hash chain status"""
-        if obj.hash_current:
-            return format_html(
-                '<span style="color: green;" title="Hash: {}">✓ Valid</span>',
-                obj.hash_current[:16] + "...",
-            )
-        return format_html('<span style="color: #999;">-</span>')
+        """
+        Compute hash on-the-fly and verify it matches the stored hash.
 
-    hash_status.short_description = "Hash Status"
+        This validates the integrity of the audit log entry by:
+        1. Computing the expected hash using the same algorithm
+        2. Comparing it with the stored hash
+        3. Displaying visual feedback on the match status
+        """
+        if not obj.hash_current:
+            return format_html('<span style="color: #999;">No Hash</span>')
+
+        try:
+            # Compute hash on the fly
+            computed_hash = self._compute_entry_hash(obj)
+
+            # Compare with stored hash
+            if computed_hash == obj.hash_current:
+                return format_html(
+                    '<span style="color: green; font-weight: bold;" title="Stored: {}\nComputed: {}">✓ Valid</span>',
+                    obj.hash_current[:16] + "...",
+                    computed_hash[:16] + "..."
+                )
+            else:
+                return format_html(
+                    '<span style="color: red; font-weight: bold;" title="MISMATCH!\nStored: {}\nComputed: {}">✗ TAMPERED</span>',
+                    obj.hash_current[:16] + "...",
+                    computed_hash[:16] + "..."
+                )
+        except Exception as e:
+            return format_html(
+                '<span style="color: orange;" title="Error: {}">⚠ Error</span>',
+                str(e)
+            )
+
+    hash_status.short_description = "Hash Validation"
+
+    def _compute_entry_hash(self, obj):
+        """
+        Compute the hash for an audit log entry using the same algorithm
+        as the tamper-evident backend.
+
+        Algorithm:
+        1. Create canonical payload from entry data
+        2. Combine: prev_hash | canonical_payload | timestamp
+        3. Compute HMAC-SHA256
+        """
+        # Get the HMAC key (same as backend)
+        key_env = "AUDIT_HASH_KEY"
+        key = os.environ.get(key_env) or getattr(settings, "SECRET_KEY", "")
+        key_bytes = key.encode("utf-8")
+
+        # Build canonical payload
+        payload = {
+            "app_label": obj.app_label,
+            "model": obj.model,
+            "pk": obj.object_pk,
+            "action": obj.action,
+            "snapshot": obj.snapshot or {},
+            "metadata": obj.metadata or {},
+            "timestamp": obj.timestamp.isoformat(),
+        }
+        canonical_payload = canonical_json(payload)
+
+        # Get previous hash (empty string if None)
+        prev_hash = obj.hash_prev or ""
+
+        # Compute HMAC-SHA256
+        content = f"{prev_hash}|{canonical_payload}|{obj.timestamp.isoformat()}".encode("utf-8")
+        computed_hash = hmac.new(key_bytes, content, hashlib.sha256).hexdigest()
+
+        return computed_hash
 
     def snapshot_formatted(self, obj):
         """Display formatted snapshot JSON"""

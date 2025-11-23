@@ -5,9 +5,8 @@ Provides secure default configurations for Django projects.
 These settings are designed to maximize security while maintaining flexibility.
 """
 
-from typing import Dict, Any
 import warnings
-
+from typing import Any, Dict
 
 # Secure defaults dictionary - Best practices for Django security
 SECURE_DEFAULTS = {

@@ -53,13 +53,14 @@ INSTALLED_APPS: list[str] = [
     "django_otp.plugins.otp_static",  # Backup codes
     "django_crypto_fields",  # Battle-tested encryption library
     # TODO: Algo pro sería añadirle OTP de whatsapp a la librería
-    # Our custom security features
+    # Custom Security features
     "auth_security",
     "input_validation",  # Input validation and sanitization
     "data_protection",  # Cryptographic controls and encrypted fields (ISO27001 A.10.1)
     "auditory",
     "app.security",
     "app.security.storage",
+    "users",  # Custom User model with encrypted fields
 ]
 
 MIDDLEWARE: list[str] = [
@@ -194,6 +195,12 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# =============================================================================
+# CUSTOM USER MODEL
+# =============================================================================
+
+AUTH_USER_MODEL = "users.User"
 
 # =============================================================================
 # SECURITY CONFIGURATION
