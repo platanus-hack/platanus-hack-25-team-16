@@ -1,5 +1,9 @@
 # = Django Security Suite
 
+<div align="center">
+  <img src="./dss-logo.png" alt="Django Security Suite Logo" width="300" />
+</div>
+
 ## Tagline
 Enterprise-grade security controls for Django applications - OWASP Top 10 protection with ISO 27001 compliance built-in.
 
