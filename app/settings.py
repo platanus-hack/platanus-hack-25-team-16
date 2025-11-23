@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import dj_database_url
 
 from decouple import Csv, config
 import re
@@ -107,26 +108,13 @@ WSGI_APPLICATION = "app.wsgi.application"
 # Parse DATABASE_URL from environment
 DATABASE_URL = config("DATABASE_URL", default="")
 
-match_obj = re.match(
-    r'postgresql://(?P<user>[^:]+):(?P<password>[^@]+)@(?P<host>[^/]+)/(?P<name>[^?]+)(\?.*)?',
-    DATABASE_URL
-)
-if not DATABASE_URL or not match_obj:
-    raise ValueError("Invalid DATABASE_URL format")
 
-db_config = match_obj.groupdict() if match_obj else {}
+
 DATABASES: dict[str, dict[str, object]] = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": db_config["name"],
-        "USER": db_config["user"],
-        "PASSWORD": db_config["password"],
-        "HOST": db_config["host"],
-        "PORT": "5432",
-        "OPTIONS": {
-            "sslmode": "require",
-        },
-    }
+    "default": dj_database_url.parse(
+        DATABASE_URL,
+        conn_health_checks=True,
+    )
 }
 
 # Password validation
