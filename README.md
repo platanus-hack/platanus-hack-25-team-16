@@ -1,5 +1,9 @@
 # 🔐 Django Security Suite
 
+<div align="center">
+  <img src="./dss-logo.png" alt="Django Security Suite Logo" width="300" />
+</div>
+
 > **Enterprise-Grade Django Security Suite** - ISO 27001 Compliant
 > Platanus Hackathon 2025 - Team 16
 
