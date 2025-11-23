@@ -87,18 +87,28 @@ class NGramIndexTable:
         model_class = apps.get_model(app_label, model)
 
         with connection.cursor() as cursor:
-            # Check if table exists
-            cursor.execute(f"""
-                SELECT name FROM sqlite_master
-                WHERE type='table' AND name='{table_name}'
-            """)
+            # Check if table exists using database-agnostic method
+            try:
+                table_exists = table_name in connection.introspection.table_names()
+            except Exception:
+                # If introspection fails (e.g., during migrations), assume table doesn't exist
+                table_exists = False
 
-            if not cursor.fetchone():
+            if not table_exists:
                 # Create the n-gram index table
                 parent_table = model_class._meta.db_table
+
+                # Use database-specific syntax for primary key
+                if connection.vendor == 'postgresql':
+                    pk_definition = "id SERIAL PRIMARY KEY"
+                elif connection.vendor == 'sqlite':
+                    pk_definition = "id INTEGER PRIMARY KEY AUTOINCREMENT"
+                else:
+                    pk_definition = "id INTEGER PRIMARY KEY AUTO_INCREMENT"
+
                 cursor.execute(f"""
                     CREATE TABLE {table_name} (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        {pk_definition},
                         {fk_column} INTEGER NOT NULL,
                         ngram_hash VARCHAR(64) NOT NULL,
                         FOREIGN KEY ({fk_column}) REFERENCES {parent_table}(id) ON DELETE CASCADE
@@ -280,20 +290,28 @@ class SearchableEncryptedTextField(EncryptedTextField):
 
         def handle_post_save(sender, instance, created, **kwargs):
             """Handle post_save signal to update n-gram indexes."""
-            # Ensure table exists
-            model_name = f"{sender._meta.app_label}.{sender._meta.object_name}"
-            NGramIndexTable.create_table(model_name, field_name)
+            try:
+                # Ensure table exists
+                model_name = f"{sender._meta.app_label}.{sender._meta.object_name}"
+                NGramIndexTable.create_table(model_name, field_name)
 
-            # Get the field value (plaintext)
-            value = getattr(instance, field_name, None)
+                # Get the field value (plaintext)
+                value = getattr(instance, field_name, None)
 
-            if value:
-                # Index the value
-                NGramIndexTable.index_value(instance, field_name, value)
+                if value:
+                    # Index the value
+                    NGramIndexTable.index_value(instance, field_name, value)
+            except Exception:
+                # Silently fail during migrations or when tables don't exist
+                pass
 
         def handle_post_delete(sender, instance, **kwargs):
             """Handle post_delete signal to clean up n-gram indexes."""
-            NGramIndexTable.clear_indexes(instance, field_name)
+            try:
+                NGramIndexTable.clear_indexes(instance, field_name)
+            except Exception:
+                # Silently fail during migrations or when tables don't exist
+                pass
 
         # Connect signals with unique dispatch_uid
         post_save.connect(

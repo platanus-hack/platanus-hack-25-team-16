@@ -184,16 +184,10 @@ class SearchableEncryptedFieldTests(TestCase):
         model_name = "data_protection.SearchableDataExample"
         table_name = NGramIndexTable.get_table_name(model_name, "email")
 
-        # Check table exists
-        with connection.cursor() as cursor:
-            cursor.execute(
-                "SELECT name FROM sqlite_master WHERE type='table' AND name=%s",
-                [table_name]
-            )
-            result = cursor.fetchone()
+        # Check table exists using database-agnostic method
+        table_exists = table_name in connection.introspection.table_names()
 
-        self.assertIsNotNone(result)
-        self.assertEqual(result[0], table_name)
+        self.assertTrue(table_exists, f"Table {table_name} should exist")
 
     def test_ngram_index_populated(self):
         """Test that n-gram indexes are populated on save."""

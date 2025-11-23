@@ -531,4 +531,9 @@ if not DJANGO_CRYPTO_FIELDS_KEY_PATH.exists():
 # Auto-create keys on first run
 AUTO_CREATE_KEYS = True
 
+# Configure django-revision to avoid metadata lookup errors
+# This is required by django-crypto-fields
+APP_NAME = config('APP_NAME', default='hackathon-backend')
+REVISION = config('REVISION', default='0.1.0')
+
 DJANGO_REVISION_IGNORE_WORKING_DIR = True
