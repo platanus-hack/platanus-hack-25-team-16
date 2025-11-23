@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 
 from decouple import Csv, config
+import re
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -102,13 +103,30 @@ WSGI_APPLICATION = "app.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# Parse DATABASE_URL from environment
+DATABASE_URL = config("DATABASE_URL", default="")
+
+match_obj = re.match(
+    r'postgresql://(?P<user>[^:]+):(?P<password>[^@]+)@(?P<host>[^/]+)/(?P<name>[^?]+)(\?.*)?',
+    DATABASE_URL
+)
+if not DATABASE_URL or not match_obj:
+    raise ValueError("Invalid DATABASE_URL format")
+
+db_config = match_obj.groupdict() if match_obj else {}
 DATABASES: dict[str, dict[str, object]] = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": db_config["name"],
+        "USER": db_config["user"],
+        "PASSWORD": db_config["password"],
+        "HOST": db_config["host"],
+        "PORT": "5432",
+        "OPTIONS": {
+            "sslmode": "require",
+        },
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -386,7 +404,7 @@ DJANGO_SEC = {
 # Apply secure defaults based on environment
 from app.security.conf import apply_secure_defaults  # noqa: E402
 
-# Use relaxed preset for development, moderate for production
+# # Use relaxed preset for development, moderate for production
 if DEBUG:
     apply_secure_defaults(globals(), preset="relaxed")
 else:
