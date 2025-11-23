@@ -13,6 +13,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \
     libmagic1 \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv for fast dependency management
@@ -33,7 +34,6 @@ COPY . .
 # Create directories for static files and crypto keys
 RUN mkdir -p /app/staticfiles /var/lib/crypto_keys && \
     chmod 700 /var/lib/crypto_keys
-
 
 # Collect static files (only once, during build)
 RUN python manage.py collectstatic --noinput
