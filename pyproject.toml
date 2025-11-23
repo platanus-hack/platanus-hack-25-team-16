@@ -45,6 +45,7 @@ addopts = [
     "--strict-markers",
     "--tb=short",
     "--disable-warnings",
+    "--reuse-db",
 ]
 markers = [
     "django_db: mark test as requiring database access",
