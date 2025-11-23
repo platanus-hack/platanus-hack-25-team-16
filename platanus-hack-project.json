@@ -1,4 +1,4 @@
 {
-  "project-name": "<FILL THIS>",
-  "project-description-spanish": "<FILL THIS>"
+  "project-name": "django-security-suite",
+  "project-description-spanish": "Suite de seguridad empresarial para Django que protege contra las vulnerabilidades más comunes como inyección SQL, XSS y CSRF, con cumplimiento ISO 27001. Incluye funciones avanzadas como limitación de tasa, autenticación multifactor y cifrado de datos para garantizar la seguridad integral de las aplicaciones.​"
 }
