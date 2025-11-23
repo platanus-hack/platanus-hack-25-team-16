@@ -254,7 +254,7 @@ DJANGO_SEC = {
     "RATE_LIMITING": {
         "BACKEND": "cache",  # 'redis', 'cache', 'memory'
         "DEFAULT_LIMITS": {
-            "anonymous": "100/h",
+            "anonymous": "5/m",
             "authenticated": "1000/h",
         },
         "ENDPOINT_LIMITS": {
@@ -490,7 +490,18 @@ DATA_PROTECTION: dict[str, object] = {
 # =============================================================================
 
 # Key path for django-crypto-fields
-DJANGO_CRYPTO_FIELDS_KEY_PATH = BASE_DIR / 'crypto_keys'
+# IMPORTANT: Must be OUTSIDE the project directory for security
+# In development: uses /tmp/crypto_keys
+# In production: set DJANGO_CRYPTO_FIELDS_KEY_PATH env var to a secure location
+DJANGO_CRYPTO_FIELDS_KEY_PATH = Path(
+    config(
+        'DJANGO_CRYPTO_FIELDS_KEY_PATH',
+        default='/tmp/crypto_keys' if DEBUG else str(BASE_DIR.parent / 'crypto_keys')
+    )
+)
+
+if not DJANGO_CRYPTO_FIELDS_KEY_PATH.exists():
+    DJANGO_CRYPTO_FIELDS_KEY_PATH.mkdir(parents=True, mode=0o700)
 
 # Auto-create keys on first run
 AUTO_CREATE_KEYS = True
