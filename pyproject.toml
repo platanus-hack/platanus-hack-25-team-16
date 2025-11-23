@@ -20,6 +20,7 @@ dependencies = [
     "whitenoise>=6.11.0",
     "django-crypto-fields>=0.4.0",  # Battle-tested encryption fields
     "gunicorn>=23.0.0",
+    "psycopg[binary,pool]>=3.2.13",
 ]
 
 [dependency-groups]
